@@ -1,5 +1,7 @@
 package com.drawit.drawit.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
@@ -10,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "User")
+@Builder
+@AllArgsConstructor
 public class User {
 
     @Id
@@ -26,19 +30,19 @@ public class User {
     private String nickname;
 
     @Column(name = "total_points", nullable = false)
-    private Integer totalPoints;
+    private Integer totalPoints = 0;
 
     @Column(name = "current_points", nullable = false)
-    private Integer currentPoints;
+    private Integer currentPoints = 0;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "nickname_color", nullable = false)
-    private String nicknameColor;
+    private String nicknameColor = "white";
 
     @Column(name = "chatting_color", nullable = false)
-    private String chattingColor;
+    private String chattingColor = "white";
 
     // 관계 매핑
     @OneToMany(mappedBy = "user")
@@ -64,4 +68,12 @@ public class User {
 
     @OneToMany(mappedBy = "drawer")
     private List<GameRound> drawnRounds;
+
+    public static class UserBuilder {
+        private Integer totalPoints = 0;
+        private Integer currentPoints = 0;
+        private LocalDateTime createdAt = LocalDateTime.now();
+        private String nicknameColor = "white";
+        private String chattingColor = "white";
+    }
 }

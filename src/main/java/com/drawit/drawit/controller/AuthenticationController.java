@@ -5,7 +5,7 @@ import com.drawit.drawit.dto.request.RequestLoginDto;
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.entity.User;
 import com.drawit.drawit.security.JwtTokenProvider;
-import com.drawit.drawit.service.CustomUserDetailsService;
+import com.drawit.drawit.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -28,7 +28,7 @@ import java.util.Optional;
 public class AuthenticationController {
 
     private final AuthenticationManager authenticationManager;
-    private final CustomUserDetailsService customUserDetailsService;
+    private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
@@ -37,10 +37,10 @@ public class AuthenticationController {
     public ResponseEntity<?> registerUser(@Valid @RequestBody RequestRegisterDto requestRegisterDto) {
         // 사용자 존재 여부 확인
         log.info(requestRegisterDto.getLoginId());
-        if (customUserDetailsService.isLoginIdDuplicate(requestRegisterDto.getLoginId())) {
+        if (userService.isLoginIdDuplicate(requestRegisterDto.getLoginId())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicated id");
         }
-        if (customUserDetailsService.isNicknameDuplicate(requestRegisterDto.getNickname())) {
+        if (userService.isNicknameDuplicate(requestRegisterDto.getNickname())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicated nickname");
         }
 
@@ -53,7 +53,7 @@ public class AuthenticationController {
                 // 기타 필드 초기화
                 .build();
 
-        customUserDetailsService.saveUser(user);
+        userService.saveUser(user);
 
         return ResponseEntity.ok("User registered successfully");
     }
@@ -73,7 +73,7 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
 
-        Optional<User> optionalUser = customUserDetailsService.getUserByLoginId(requestLoginDto.getLoginId());
+        Optional<User> optionalUser = userService.getUserByLoginId(requestLoginDto.getLoginId());
 
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found.");

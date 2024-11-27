@@ -1,7 +1,7 @@
 package com.drawit.drawit.config;
 
 import com.drawit.drawit.security.JwtAuthenticationFilter;
-import com.drawit.drawit.service.CustomUserDetailsService;
+import com.drawit.drawit.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomUserDetailsService customUserDetailsService;
+    private final UserService userService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

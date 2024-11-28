@@ -16,11 +16,11 @@ public class GameParticipant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_room_id", nullable = false)
     private GameRoom gameRoom;
 
@@ -30,6 +30,6 @@ public class GameParticipant {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
 
-    @OneToMany(mappedBy = "participant")
+    @OneToMany(mappedBy = "participant", fetch = FetchType.LAZY)
     private List<GameGuess> guesses;
 }

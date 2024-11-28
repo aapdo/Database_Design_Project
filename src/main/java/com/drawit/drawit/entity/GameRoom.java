@@ -16,7 +16,7 @@ public class GameRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "host_id", nullable = false)
     private User host;
 
@@ -26,9 +26,9 @@ public class GameRoom {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "gameRoom")
+    @OneToMany(mappedBy = "gameRoom", fetch = FetchType.LAZY)
     private List<GameRound> gameRounds;
 
-    @OneToMany(mappedBy = "gameRoom")
+    @OneToMany(mappedBy = "gameRoom", fetch = FetchType.LAZY)
     private List<GameParticipant> participants;
 }

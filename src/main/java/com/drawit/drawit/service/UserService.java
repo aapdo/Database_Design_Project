@@ -1,16 +1,21 @@
 package com.drawit.drawit.service;
 
 import com.drawit.drawit.entity.CustomUserDetails;
+import com.drawit.drawit.entity.Item;
+import com.drawit.drawit.entity.Purchase;
 import com.drawit.drawit.entity.User;
+import com.drawit.drawit.repository.ItemRepository;
+import com.drawit.drawit.repository.PurchaseRepository;
 import com.drawit.drawit.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -18,9 +23,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService implements UserDetailsService {
 
+
+    private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final PurchaseRepository purchaseRepository;
 
     // 로그인 ID 중복 체크
     public boolean isLoginIdDuplicate(String loginId) {
@@ -33,8 +42,20 @@ public class UserService implements UserDetailsService {
     }
 
     // 회원가입 시 사용자 저장
-    public User saveUser(User user) {
-        return userRepository.save(user);
+    public User register(User user) {
+        User savedUser = userRepository.save(user);
+        List<Item> initialItems = itemRepository.findAllById(List.of(1L, 2L));
+        List<Purchase> purchases = initialItems.stream()
+                .map(item -> Purchase.builder()
+                        .user(savedUser)
+                        .item(item)
+                        .purchasedAt(LocalDateTime.now())
+                        .used(false)
+                        .build())
+                .toList();
+
+        purchaseRepository.saveAll(purchases);
+        return savedUser;
     }
 
     // 로그인 아이디로 사용자 로드
@@ -54,6 +75,7 @@ public class UserService implements UserDetailsService {
     public Optional<User> getUserByLoginId(String loginId) throws UsernameNotFoundException {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        log.info("get user by login id");
         return Optional.ofNullable(user);
     }
 

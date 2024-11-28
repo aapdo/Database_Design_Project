@@ -44,28 +44,28 @@ public class User {
     private String chattingColor = "white";
 
     // 관계 매핑
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Friendship> friendships;
 
-    @OneToMany(mappedBy = "friend")
+    @OneToMany(mappedBy = "friend", fetch = FetchType.LAZY)
     private List<Friendship> friendsOf;
 
-    @OneToMany(mappedBy = "host")
+    @OneToMany(mappedBy = "host", fetch = FetchType.LAZY)
     private List<GameRoom> hostedGameRooms;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Purchase> purchases;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Post> posts;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<GameParticipant> gameParticipants;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Comment> comments;
 
-    @OneToMany(mappedBy = "drawer")
+    @OneToMany(mappedBy = "drawer", fetch = FetchType.LAZY)
     private List<GameRound> drawnRounds;
 
     public static class UserBuilder {
@@ -73,7 +73,7 @@ public class User {
         private Integer totalPoints = 0;
         private Integer currentPoints = 0;
         private LocalDateTime createdAt = LocalDateTime.now();
-        private String nicknameColor = "white";
-        private String chattingColor = "white";
+        private String nicknameColor = "black";
+        private String chattingColor = "black";
     }
 }

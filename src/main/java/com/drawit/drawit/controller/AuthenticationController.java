@@ -13,6 +13,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,7 +57,10 @@ public class AuthenticationController {
 
         log.info("register user = " + user);
 
-        userService.saveUser(user);
+        userService.register(user);
+
+
+
 
         return ResponseEntity.ok("User registered successfully");
     }
@@ -65,29 +69,39 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody RequestLoginDto requestLoginDto, HttpServletResponse response) {
         log.info("try login");
+        Authentication authentication;
+        User user;
 
         try {
-            authenticationManager.authenticate(
+            authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             requestLoginDto.getLoginId(),
                             requestLoginDto.getPassword()
                     )
             );
+            log.info("Authenticating user with loginId: " + requestLoginDto.getLoginId());
+
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
+
+        //authentication.getPrincipal() user: userId=1, nickname='jy1, loginId='test1
+        log.info("user: " + authentication.getPrincipal());
         Optional<User> optionalUser;
         try {
             optionalUser = userService.getUserByLoginId(requestLoginDto.getLoginId());
+            log.info("login user: " + optionalUser);
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("login failed");
         }
 
+
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found.");
         }
-        User user = optionalUser.get();
-        log.info("login user: " + user);
+
+        user = optionalUser.get();
+
 
 
         String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId(), user.getNickname());

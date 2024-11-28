@@ -34,11 +34,13 @@ public class UserService implements UserDetailsService {
     private final PurchaseRepository purchaseRepository;
 
     // 로그인 ID 중복 체크
+    @Transactional
     public boolean isLoginIdDuplicate(String loginId) {
         return userRepository.existsByLoginId(loginId);
     }
 
     // 닉네임 중복 체크
+    @Transactional
     public boolean isNicknameDuplicate(String nickname) {
         return userRepository.existsByNickname(nickname);
     }
@@ -61,6 +63,7 @@ public class UserService implements UserDetailsService {
     }
 
     // 로그인 아이디로 사용자 로드
+    @Transactional
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
         User user = userRepository.findByLoginId(loginId)
@@ -74,6 +77,7 @@ public class UserService implements UserDetailsService {
         return new CustomUserDetails(user.getId(), user.getNickname(), user.getLoginId(), user.getPassword(), authorities);
     }
 
+    @Transactional
     public UserDto getUserByLoginId(String loginId) throws UsernameNotFoundException {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -81,12 +85,14 @@ public class UserService implements UserDetailsService {
         return new UserDto(user);
     }
 
+    @Transactional
     public UserDto getUserByNickname(String nickname) throws UsernameNotFoundException {
         User user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return new UserDto(user);
     }
 
+    @Transactional
     public List<UserDto> getUserList(){
         List<User> users = userRepository.findAll();
         List<UserDto> userDtoList = new ArrayList<>();

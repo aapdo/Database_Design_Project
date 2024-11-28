@@ -13,12 +13,16 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<User> findByLoginId(String loginId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<User> findByNickname(String nickname);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     boolean existsByLoginId(String loginId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     boolean existsByNickname(String nickname);
 
     // 비관적 락, 업데이트 도중 조회하지 못함.

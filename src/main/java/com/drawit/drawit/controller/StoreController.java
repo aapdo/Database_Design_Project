@@ -2,10 +2,13 @@ package com.drawit.drawit.controller;
 
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.service.ItemService;
+import com.drawit.drawit.service.PurchaseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class StoreController {
 
     private final ItemService itemService;
+    private final PurchaseService purchaseService;
 
     @GetMapping("/items")
     public ResponseEntity<?> getItems() {
@@ -22,6 +26,8 @@ public class StoreController {
 
     @GetMapping("/items/myItems")
     public ResponseEntity<?> getMyItems() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        purchaseService.getItemsBytUserId(Long.parseLong(authentication.getName()));
         return ResponseEntity.ok(" ");
     }
 

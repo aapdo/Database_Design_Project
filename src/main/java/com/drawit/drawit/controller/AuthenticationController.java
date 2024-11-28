@@ -76,16 +76,21 @@ public class AuthenticationController {
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
-
-        Optional<User> optionalUser = userService.getUserByLoginId(requestLoginDto.getLoginId());
+        Optional<User> optionalUser;
+        try {
+            optionalUser = userService.getUserByLoginId(requestLoginDto.getLoginId());
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("login failed");
+        }
 
         if (optionalUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found.");
         }
         User user = optionalUser.get();
+        log.info("login user: " + user);
 
 
-        String token = jwtTokenProvider.createToken(user.getLoginId());
+        String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId(), user.getNickname());
 
         JwtLoginDto jwtLoginDto = JwtLoginDto.builder()
                 .accessToken(token)
@@ -104,6 +109,7 @@ public class AuthenticationController {
         header.add("Set-Cookie", loginCookie.toString());
         header.add("Authorization", "Bearer "+jwtLoginDto.getAccessToken());
         response.addCookie(loginCookie);
+        log.info("suc login");
 
         return ResponseEntity.ok().headers(header).body(jwtLoginDto);
     }

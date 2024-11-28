@@ -26,9 +26,11 @@ public class JwtTokenProvider {
     }
 
     // 토큰 생성
-    public String createToken(String username) {
+    public String createToken(Long userId, String loginId, String nickname) {
 
-        Claims claims = Jwts.claims().setSubject(username);
+        Claims claims = Jwts.claims().setSubject(userId.toString()); // 주로 userId를 subject로 설정
+        claims.put("nickname", nickname); // nickname 추가
+        claims.put("loginId", loginId); // loginId 추가
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
@@ -42,9 +44,19 @@ public class JwtTokenProvider {
     }
 
     // 토큰에서 사용자 loginId 추출
-    public String getUsername(String token) {
+    public String getUserId(String token) {
         return Jwts.parserBuilder().setSigningKey(key)
                 .build().parseClaimsJws(token).getBody().getSubject();
+    }
+
+    public String getLoginId(String token) {
+        return (String) Jwts.parserBuilder().setSigningKey(key)
+                .build().parseClaimsJws(token).getBody().get("loginId");
+    }
+
+    public String getNickname(String token) {
+        return (String) Jwts.parserBuilder().setSigningKey(key)
+                .build().parseClaimsJws(token).getBody().get("nickname");
     }
 
     // 토큰 유효성 검증

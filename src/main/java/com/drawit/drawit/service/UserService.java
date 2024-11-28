@@ -1,5 +1,6 @@
 package com.drawit.drawit.service;
 
+import com.drawit.drawit.entity.CustomUserDetails;
 import com.drawit.drawit.entity.User;
 import com.drawit.drawit.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,21 +48,31 @@ public class UserService implements UserDetailsService {
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.trim()))
                 .collect(Collectors.toList());
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getLoginId(),
-                user.getPassword(),
-                authorities
-        );
+        return new CustomUserDetails(user.getId(), user.getNickname(), user.getLoginId(), user.getPassword(), authorities);
     }
 
-    public Optional<User> getUserByLoginId(String loginId) {
+    public Optional<User> getUserByLoginId(String loginId) throws UsernameNotFoundException {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return Optional.ofNullable(user);
+    }
+
+    public User getUserByNickname(String nickname) throws UsernameNotFoundException {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return user;
     }
 
     public List<User> getUserList(){
         return userRepository.findAll();
     }
 
+    @Transactional
+    public User updateUserNickName(Long userId, String newNickname) throws UsernameNotFoundException {
+        User user = userRepository.findByIdForUpdate(userId.toString())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + userId));
+        user.setNickname(newNickname);
+        userRepository.save(user);
+        return user;
+    }
 }

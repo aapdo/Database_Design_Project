@@ -35,6 +35,7 @@ public class AuthenticationController {
     // 회원가입
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RequestRegisterDto requestRegisterDto) {
+        log.info("try register");
         // 사용자 존재 여부 확인
         log.info(requestRegisterDto.getLoginId());
         if (userService.isLoginIdDuplicate(requestRegisterDto.getLoginId())) {
@@ -53,6 +54,8 @@ public class AuthenticationController {
                 // 기타 필드 초기화
                 .build();
 
+        log.info("register user = " + user);
+
         userService.saveUser(user);
 
         return ResponseEntity.ok("User registered successfully");
@@ -61,6 +64,7 @@ public class AuthenticationController {
     // 로그인
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody RequestLoginDto requestLoginDto, HttpServletResponse response) {
+        log.info("try login");
 
         try {
             authenticationManager.authenticate(

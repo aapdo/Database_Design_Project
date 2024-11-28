@@ -4,6 +4,7 @@ import com.drawit.drawit.service.UserService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.*;
@@ -14,6 +15,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -25,19 +27,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String token = resolveToken(request);
+        if (token == null) {
+            log.info(request.getHeader("Authorization"));
+            log.info("jwt token missing");
+        }
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
             String username = jwtTokenProvider.getUsername(token);
+            log.info(username);
             UserDetails userDetails = userService.loadUserByUsername(username);
+            log.info("Loaded user: " + userDetails);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
+            log.info("JWT Token: " + token);
+            log.info("Is token valid? " + jwtTokenProvider.validateToken(token));
+            log.info("Username from token: " + username);
+            log.info("Loaded user details: " + userDetails);
+            log.info("Authorities: " + userDetails.getAuthorities());
 
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.info("ok");
+        }
+        log.info("Authentication before filter chain execution: " + SecurityContextHolder.getContext().getAuthentication());
         filterChain.doFilter(request, response);
+        log.info("do filter ok");
+        log.info("Authentication after filter chain execution: " + SecurityContextHolder.getContext().getAuthentication());
+
     }
 
     // 헤더에서 토큰 추출

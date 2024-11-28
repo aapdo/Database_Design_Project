@@ -3,11 +3,16 @@ package com.drawit.drawit.service;
 import com.drawit.drawit.entity.User;
 import com.drawit.drawit.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,10 +41,15 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        List<GrantedAuthority> authorities = Arrays.stream(user.getRoles().split(","))
+                //.map(role -> new SimpleGrantedAuthority("ROLE_" + role.trim().toUpperCase()))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.trim()))
+                .collect(Collectors.toList());
+
         return new org.springframework.security.core.userdetails.User(
                 user.getLoginId(),
                 user.getPassword(),
-                new ArrayList<>()
+                authorities
         );
     }
 
@@ -47,6 +57,10 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return Optional.ofNullable(user);
+    }
+
+    public List<User> getUserList(){
+        return userRepository.findAll();
     }
 
 }

@@ -20,6 +20,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String roles;
+
     @Column(nullable = false)
     private String loginId;
 
@@ -70,6 +72,7 @@ public class User {
     private List<GameRound> drawnRounds;
 
     public static class UserBuilder {
+        private String roles = "user";
         private Integer totalPoints = 0;
         private Integer currentPoints = 0;
         private LocalDateTime createdAt = LocalDateTime.now();

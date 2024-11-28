@@ -1,5 +1,6 @@
 package com.drawit.drawit.controller;
 
+import com.drawit.drawit.dto.UserDto;
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.dto.response.ResponseUserDto;
 import com.drawit.drawit.entity.User;
@@ -27,7 +28,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> getUserList() {
         List<ResponseUserDto> userList = new ArrayList<>();
-        List<User> users = userService.getUserList();
+        List<UserDto> users = userService.getUserList();
         int userSize = users.size();
 
         for (int i = 0; i < userSize; i++) {

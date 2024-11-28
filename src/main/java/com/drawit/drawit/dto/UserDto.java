@@ -8,9 +8,7 @@ import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
-@Getter
-@ToString
+@Data
 public class UserDto {
     private Long id;
     private String roles;

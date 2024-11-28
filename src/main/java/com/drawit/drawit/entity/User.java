@@ -1,5 +1,6 @@
 package com.drawit.drawit.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 import jakarta.persistence.*;
@@ -46,28 +47,35 @@ public class User {
 
     // 관계 매핑
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Friendship> friendships;
 
     @OneToMany(mappedBy = "friend", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Friendship> friendsOf;
 
     @OneToMany(mappedBy = "host", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<GameRoom> hostedGameRooms;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonIgnore
     private List<Purchase> purchases;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Post> posts;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<GameParticipant> gameParticipants;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Comment> comments;
 
     @OneToMany(mappedBy = "drawer", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<GameRound> drawnRounds;
 
     public static class UserBuilder {

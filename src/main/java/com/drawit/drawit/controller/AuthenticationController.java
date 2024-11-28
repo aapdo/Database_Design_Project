@@ -1,5 +1,6 @@
 package com.drawit.drawit.controller;
 
+import com.drawit.drawit.dto.AuthenticationPrincipalDto;
 import com.drawit.drawit.dto.JwtLoginDto;
 import com.drawit.drawit.dto.UserDto;
 import com.drawit.drawit.dto.request.RequestLoginDto;
@@ -70,11 +71,8 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody RequestLoginDto requestLoginDto, HttpServletResponse response) {
         log.info("try login");
-        Authentication authentication;
-        User user;
-
         try {
-            authentication = authenticationManager.authenticate(
+             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             requestLoginDto.getLoginId(),
                             requestLoginDto.getPassword()
@@ -86,12 +84,8 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
 
-        //authentication.getPrincipal() user: userId=1, nickname='jy1, loginId='test1
-        log.info("user: " + authentication.getPrincipal());
-        //Optional<User> optionalUser;
         UserDto userDto;
         try {
-            //optionalUser = userService.getUserByLoginId(requestLoginDto.getLoginId());
             userDto = userService.getUserByLoginId(requestLoginDto.getLoginId());
             log.info("login user: " + userDto);
         } catch (UsernameNotFoundException e) {
@@ -110,6 +104,8 @@ public class AuthenticationController {
 
         HttpHeaders header = new HttpHeaders();
         Cookie loginCookie = new Cookie("loginToken", jwtLoginDto.getAccessToken());
+        Cookie nicknameCookie = new Cookie("userNickname", userDto.getNickname());
+
 
         loginCookie.setPath("/");
         // 30일 간 쿠키 유지.
@@ -117,6 +113,8 @@ public class AuthenticationController {
 
         header.add("Set-Cookie", loginCookie.toString());
         header.add("Authorization", "Bearer "+jwtLoginDto.getAccessToken());
+        header.add("Set-Cookie", nicknameCookie.toString());
+
         response.addCookie(loginCookie);
         log.info("suc login");
 

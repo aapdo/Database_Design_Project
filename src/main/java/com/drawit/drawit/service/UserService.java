@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +44,7 @@ public class UserService implements UserDetailsService {
     }
 
     // 회원가입 시 사용자 저장
-    public User register(User user) {
+    public UserDto register(User user) {
         User savedUser = userRepository.save(user);
         List<Item> initialItems = itemRepository.findAllById(List.of(1L, 2L));
         List<Purchase> purchases = initialItems.stream()
@@ -56,7 +57,7 @@ public class UserService implements UserDetailsService {
                 .toList();
 
         purchaseRepository.saveAll(purchases);
-        return savedUser;
+        return new UserDto(savedUser);
     }
 
     // 로그인 아이디로 사용자 로드
@@ -80,22 +81,28 @@ public class UserService implements UserDetailsService {
         return new UserDto(user);
     }
 
-    public User getUserByNickname(String nickname) throws UsernameNotFoundException {
+    public UserDto getUserByNickname(String nickname) throws UsernameNotFoundException {
         User user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        return user;
+        return new UserDto(user);
     }
 
-    public List<User> getUserList(){
-        return userRepository.findAll();
+    public List<UserDto> getUserList(){
+        List<User> users = userRepository.findAll();
+        List<UserDto> userDtoList = new ArrayList<>();
+        for (User user: users) {
+            userDtoList.add(new UserDto(user));
+        }
+
+        return userDtoList;
     }
 
     @Transactional
-    public User updateUserNickName(Long userId, String newNickname) throws UsernameNotFoundException {
+    public UserDto updateUserNickName(Long userId, String newNickname) throws UsernameNotFoundException {
         User user = userRepository.findByIdForUpdate(userId.toString())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + userId));
         user.setNickname(newNickname);
         userRepository.save(user);
-        return user;
+        return new UserDto(user);
     }
 }

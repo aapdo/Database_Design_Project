@@ -1,5 +1,6 @@
 package com.drawit.drawit.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,6 +36,7 @@ public class Item {
     private Integer cost;
 
     @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Purchase> purchases;
 
 

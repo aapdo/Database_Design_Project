@@ -1,5 +1,6 @@
 package com.drawit.drawit.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -54,6 +55,7 @@ public class User {
     private List<GameRoom> hostedGameRooms;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<Purchase> purchases;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)

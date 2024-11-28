@@ -39,10 +39,10 @@ public class User {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "nickname_color", nullable = false)
-    private String nicknameColor = "white";
+    private String nicknameColor = "black";
 
     @Column(name = "chatting_color", nullable = false)
-    private String chattingColor = "white";
+    private String chattingColor = "black";
 
     // 관계 매핑
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)

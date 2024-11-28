@@ -1,6 +1,7 @@
 package com.drawit.drawit.controller;
 
 import com.drawit.drawit.dto.JwtLoginDto;
+import com.drawit.drawit.dto.UserDto;
 import com.drawit.drawit.dto.request.RequestLoginDto;
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.entity.User;
@@ -87,30 +88,24 @@ public class AuthenticationController {
 
         //authentication.getPrincipal() user: userId=1, nickname='jy1, loginId='test1
         log.info("user: " + authentication.getPrincipal());
-        Optional<User> optionalUser;
+        //Optional<User> optionalUser;
+        UserDto userDto;
         try {
-            optionalUser = userService.getUserByLoginId(requestLoginDto.getLoginId());
-            log.info("login user: " + optionalUser);
+            //optionalUser = userService.getUserByLoginId(requestLoginDto.getLoginId());
+            userDto = userService.getUserByLoginId(requestLoginDto.getLoginId());
+            log.info("login user: " + userDto);
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("login failed");
         }
 
 
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found.");
-        }
-
-        user = optionalUser.get();
-
-
-
-        String token = jwtTokenProvider.createToken(user.getId(), user.getLoginId(), user.getNickname());
+        String token = jwtTokenProvider.createToken(userDto.getId(), userDto.getLoginId(), userDto.getNickname());
 
         JwtLoginDto jwtLoginDto = JwtLoginDto.builder()
                 .accessToken(token)
                 .loginId(requestLoginDto.getLoginId())
-                .userId((user.getId()))
-                .nickname(user.getNickname())
+                .userId((userDto.getId()))
+                .nickname(userDto.getNickname())
                 .build();
 
         HttpHeaders header = new HttpHeaders();

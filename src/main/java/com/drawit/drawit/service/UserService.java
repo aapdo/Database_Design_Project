@@ -1,5 +1,6 @@
 package com.drawit.drawit.service;
 
+import com.drawit.drawit.dto.UserDto;
 import com.drawit.drawit.entity.CustomUserDetails;
 import com.drawit.drawit.entity.Item;
 import com.drawit.drawit.entity.Purchase;
@@ -72,11 +73,11 @@ public class UserService implements UserDetailsService {
         return new CustomUserDetails(user.getId(), user.getNickname(), user.getLoginId(), user.getPassword(), authorities);
     }
 
-    public Optional<User> getUserByLoginId(String loginId) throws UsernameNotFoundException {
+    public UserDto getUserByLoginId(String loginId) throws UsernameNotFoundException {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         log.info("get user by login id");
-        return Optional.ofNullable(user);
+        return new UserDto(user);
     }
 
     public User getUserByNickname(String nickname) throws UsernameNotFoundException {

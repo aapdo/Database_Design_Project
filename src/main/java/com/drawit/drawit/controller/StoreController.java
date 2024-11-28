@@ -1,5 +1,6 @@
 package com.drawit.drawit.controller;
 
+import com.drawit.drawit.dto.ItemDto;
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.service.ItemService;
 import com.drawit.drawit.service.PurchaseService;
@@ -10,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -27,8 +31,8 @@ public class StoreController {
     @GetMapping("/items/myItems")
     public ResponseEntity<?> getMyItems() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        purchaseService.getItemsBytUserId(Long.parseLong(authentication.getName()));
-        return ResponseEntity.ok(" ");
+        List<ItemDto> itemDtoList = purchaseService.getItemsBytUserId(Long.parseLong(authentication.getName()));
+        return ResponseEntity.ok(itemDtoList);
     }
 
     @PostMapping("/items/use")

@@ -15,6 +15,9 @@ public class Friendship {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "status", nullable = false)
+    private AcceptStatus status;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -25,4 +28,9 @@ public class Friendship {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    public enum AcceptStatus {
+        WAIT, ACCEPT, REJECT
+    }
+
 }

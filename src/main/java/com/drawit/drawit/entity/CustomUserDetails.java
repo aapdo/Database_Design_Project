@@ -35,6 +35,10 @@ public class CustomUserDetails implements UserDetails {
         return password;
     }
 
+    /**
+     *
+     * @return userId
+     */
     @Override
     public String getUsername() {
         return userId.toString();

@@ -1,5 +1,7 @@
 package com.drawit.drawit.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
@@ -8,7 +10,9 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Builder
 @Table(name = "GameRoom")
 public class GameRoom {
 
@@ -21,7 +25,7 @@ public class GameRoom {
     private User host;
 
     @Column(nullable = false)
-    private String status;
+    private RoomStatus status;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -31,4 +35,9 @@ public class GameRoom {
 
     @OneToMany(mappedBy = "gameRoom", fetch = FetchType.LAZY)
     private List<GameParticipant> participants;
+
+    public enum RoomStatus {
+        WAIT, START, END
+    }
+
 }

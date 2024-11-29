@@ -32,9 +32,9 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        //.anyRequest().permitAll()
-                        .requestMatchers("/users/login", "/users/register").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
+                        //.requestMatchers("/users/login", "/users/register").permitAll()
+                        //.anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(
@@ -61,6 +61,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         //configuration.addAllowedOrigin("*"); // 모든 Origin 허용
+        configuration.addAllowedOrigin("http://localhost:8081");
         configuration.addAllowedOrigin("http://localhost:3000");
         configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
         configuration.addAllowedHeader("*"); // 모든 헤더 허용

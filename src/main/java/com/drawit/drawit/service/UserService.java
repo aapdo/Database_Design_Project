@@ -111,4 +111,41 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         return new UserDto(user);
     }
+
+    @Transactional
+    public void changeActiveItem(Long userId, Long itemId) {
+        // 1. 유저 확인
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        // 2. 아이템 확인
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item not found with ID: " + itemId));
+        String target = item.getTarget();
+
+        // 4. 기존 사용 중인 아이템을 모두 `used = false`로 업데이트
+        List<Purchase> userPurchases = purchaseRepository.findPurchaseByUserId(userId);
+        for (Purchase purchase : userPurchases) {
+            purchase.setUsed(false);
+        }
+
+        Purchase purchaseToActivate = purchaseRepository.findByUserIdAndItemId(userId, itemId)
+                .orElseThrow(() -> new IllegalArgumentException("User has not purchased this item."));
+        purchaseToActivate.setUsed(true);
+
+
+        // 3. 아이템을 활성화 (닉네임 색상 또는 채팅 색상 변경)
+        if ("nickname".equals(target)) {
+            user.setNicknameColor(item.getColor());
+        } else if ("chatting".equals(target)) {
+            user.setChattingColor(item.getColor());
+        } else {
+            throw new IllegalArgumentException("Invalid target specified: " + target);
+        }
+
+        // 5. 변경 사항 저장
+        userRepository.save(user);
+        purchaseRepository.saveAll(userPurchases); // 기존 아이템 저장
+        purchaseRepository.save(purchaseToActivate);
+    }
 }

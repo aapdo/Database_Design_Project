@@ -28,4 +28,8 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Purchase p WHERE p.user.id = :userId AND p.item.id = :itemId")
     Optional<Purchase> findByUserIdAndItemId(@Param("userId") Long userId, @Param("itemId") Long itemId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    boolean existsByUserIdAndItemId(Long userId, Long itemId);
+
 }

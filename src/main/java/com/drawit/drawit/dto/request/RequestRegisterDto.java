@@ -5,7 +5,6 @@ import lombok.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
 public class RequestRegisterDto {
     private String loginId;
     private String password;

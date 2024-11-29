@@ -1,6 +1,7 @@
 package com.drawit.drawit.controller;
 
 import com.drawit.drawit.dto.ItemDto;
+import com.drawit.drawit.dto.request.ItemIdDto;
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.service.ItemService;
 import com.drawit.drawit.service.PurchaseService;
@@ -33,17 +34,17 @@ public class StoreController {
 
     @GetMapping("/items/myItems")
     public ResponseEntity<?> getMyItems() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        List<ItemDto> itemDtoList = purchaseService.getItemsBytUserId(Long.parseLong(authentication.getName()));
+        Long userId = this.getUserIdFromAuthentication();
+        List<ItemDto> itemDtoList = purchaseService.getItemsBytUserId(userId);
         return ResponseEntity.ok(itemDtoList);
     }
 
     @PostMapping("/items/use")
-    public ResponseEntity<?> useMyItem(@Valid @RequestBody Long itemId) {
-        Long userId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+    public ResponseEntity<?> useMyItem(@Valid @RequestBody ItemIdDto itemId) {
+        Long userId = this.getUserIdFromAuthentication();
 
         try {
-            userService.changeActiveItem(userId, itemId);
+            userService.changeActiveItem(userId, itemId.getItemId());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -52,7 +53,21 @@ public class StoreController {
     }
 
     @PostMapping("/purchase")
-    public ResponseEntity<?> buyItem(@Valid @RequestBody Long itemId) {
-        return ResponseEntity.ok(" ");
+    public ResponseEntity<?> buyItem(@Valid @RequestBody ItemIdDto itemId) {
+        log.info("try buy item");
+        Long userId = this.getUserIdFromAuthentication();
+
+        try {
+            // 아이템 구매 처리
+            purchaseService.buyItem(userId, itemId.getItemId());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+
+        return ResponseEntity.ok("Item purchased successfully.");
+    }
+
+    private Long getUserIdFromAuthentication() {
+        return Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
     }
 }

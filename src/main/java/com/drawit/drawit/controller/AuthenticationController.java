@@ -53,6 +53,8 @@ public class AuthenticationController {
                 .loginId(requestRegisterDto.getLoginId())
                 .password(passwordEncoder.encode(requestRegisterDto.getPassword()))
                 .nickname(requestRegisterDto.getNickname())
+                .totalPoints(200)
+                .currentPoints(200)
                 .createdAt(LocalDateTime.now())
                 // 기타 필드 초기화
                 .build();

@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FriendshipController {
     private final FriendshipService friendshipService;
-    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
 
     @MessageMapping("/addFriend")

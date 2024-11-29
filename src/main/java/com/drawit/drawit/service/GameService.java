@@ -12,8 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,32 +59,81 @@ public class GameService {
                 "participantId", gameParticipant.getId());
     }
 
-    public Long joinRoom(Long gameRoomId, Long userId) {
-        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId)
-                .orElseThrow(() -> new IllegalArgumentException("GameRoom not found with ID: " + gameRoomId));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+    /**
+     * 친구 초대
+     * @return receiverId
+     */
+    public Long inviteFriendToRoom(Long hostId, Long roomId, String receiverNickname) {
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
 
-        // 3. GameParticipant 생성
+        if (!gameRoom.getHost().getId().equals(hostId)) {
+            throw new IllegalArgumentException("Only the host can invite friends");
+        }
+
+        User receiver = userRepository.findByNickname(receiverNickname)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return receiver.getId();
+    }
+
+    /**
+     * 초대 수락 및 방 참여
+     */
+    @Transactional
+    public Long acceptInvite(Long userId, Long roomId) {
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         GameParticipant participant = GameParticipant.builder()
                 .user(user)
                 .gameRoom(gameRoom)
-                .pointsEarned(0) // 초기 점수 설정
+                .pointsEarned(0)
                 .joinedAt(LocalDateTime.now())
                 .build();
 
-        // 4. GameParticipant 저장
         gameParticipantRepository.save(participant);
-
-        List<GameParticipant> participants = gameRoom.getParticipants();
-        if (participants == null) {
-            gameRoom.setParticipants(new ArrayList<>());
-        }
-
-        gameRoom.getParticipants().add(participant);
-        gameRoomRepository.save(gameRoom);
-
-
         return participant.getId();
+    }
+
+    /**
+     * 특정 방의 정보 가져오기 (호스트 닉네임 및 참가자 닉네임 목록)
+     */
+    public Map<String, Object> getRoomInfo(Long roomId) {
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
+
+        String hostNickname = gameRoom.getHost().getNickname();
+
+        List<String> participantNicknames = gameParticipantRepository.findAllByGameRoomId(roomId).stream()
+                .map(participant -> participant.getUser().getNickname())
+                .collect(Collectors.toList());
+
+        Map<String, Object> roomInfo = new HashMap<>();
+        roomInfo.put("hostNickname", hostNickname);
+        roomInfo.put("participantNicknames", participantNicknames);
+
+        return roomInfo;
+    }
+
+    /**
+     * 특정 방의 모든 참가자의 User ID 목록 가져오기
+     */
+    public List<Long> getParticipantUserIdsByRoomId(Long roomId) {
+        return gameParticipantRepository.findAllByGameRoomId(roomId).stream()
+                .map(participant -> participant.getUser().getId())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자 ID로 닉네임 조회
+     */
+    public String getUserNicknameById(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return user.getNickname();
     }
 }

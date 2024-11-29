@@ -37,6 +37,10 @@ public class StoreController {
 
     @PostMapping("/items/use")
     public ResponseEntity<?> useMyItem(@Valid @RequestBody Long itemId) {
+        Long userId = Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+
+
+
         return ResponseEntity.ok(" ");
     }
 

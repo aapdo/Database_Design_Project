@@ -54,7 +54,7 @@ public class UserService implements UserDetailsService {
                         .user(savedUser)
                         .item(item)
                         .purchasedAt(LocalDateTime.now())
-                        .used(false)
+                        .used(true)
                         .build())
                 .toList();
 

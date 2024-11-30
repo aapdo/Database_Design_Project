@@ -34,6 +34,9 @@ public class GameParticipant {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
 
+    @Column(name = "isDraw", nullable = false)
+    private Boolean isDraw;
+
     @OneToMany(mappedBy = "participant", fetch = FetchType.LAZY)
     private List<GameGuess> guesses;
 }

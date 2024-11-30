@@ -1,7 +1,11 @@
 package com.drawit.drawit.controller;
 
+import com.drawit.drawit.dto.GameRoundDto;
+import com.drawit.drawit.dto.request.GuessWordRequestDto;
 import com.drawit.drawit.dto.request.RequestInviteRoomDto;
 import com.drawit.drawit.dto.request.RequestJoinRoomDto;
+import com.drawit.drawit.dto.response.GameGuessResponseDto;
+import com.drawit.drawit.entity.GameRound;
 import com.drawit.drawit.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -114,6 +118,54 @@ public class GameController {
                 );
             }
         }
+    }
+
+    /**
+     * 게임 시작 요청
+     */
+    @MessageMapping("/startGame")
+    public void startGame(@Payload Map<String, Object> payload, WebSocketSession session) {
+        Long hostId = getUserIdFromSession(session);
+        Long roomId = ((Number) payload.get("roomId")).longValue();
+        String imageUrl = "";
+
+        // 게임 시작 처리
+        GameRoundDto gameRoundDto = gameService.startGame(hostId, roomId);
+
+        // 모든 참가자에게 게임 시작 알림
+        List<Long> participantUserIds = gameService.getParticipantUserIdsByRoomId(roomId);
+        for (Long userId : participantUserIds) {
+            messagingTemplate.convertAndSendToUser(
+                    userId.toString(),
+                    "/queue/gameStart",
+                    Map.of(
+                            "roomId", roomId,
+                            "roundNumber", gameRoundDto.getRoundNumber(),
+                            "drawerNickname", gameRoundDto.getDrawerNickname(),
+                            "correctWord", gameRoundDto.getCorrectWord()
+                    )
+            );
+        }
+    }
+
+    /**
+     * 사용자 단어 추측 요청 처리
+     */
+    @MessageMapping("/guessWord")
+    public void guessWord(@Payload GuessWordRequestDto requestDto) {
+        // 추측 처리
+        GameGuessResponseDto responseDto = gameService.processGuess(
+                requestDto.getParticipantId(),
+                requestDto.getRoundId(),
+                requestDto.getGuessedWord()
+        );
+
+        // 결과 클라이언트로 전송
+        messagingTemplate.convertAndSendToUser(
+                requestDto.getParticipantId().toString(),
+                "/queue/guessResult",
+                responseDto
+        );
     }
 
     private Long getUserIdFromSession(WebSocketSession session) {

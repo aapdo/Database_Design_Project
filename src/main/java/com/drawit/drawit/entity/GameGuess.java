@@ -1,12 +1,16 @@
 package com.drawit.drawit.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Builder
 @Table(name = "GameGuess")
 public class GameGuess {
 
@@ -26,7 +30,7 @@ public class GameGuess {
     private String guessedWord;
 
     @Column(name = "similarity")
-    private Float similarity;
+    private Double similarity;
 
     @Column(name = "points_earned")
     private Integer pointsEarned;

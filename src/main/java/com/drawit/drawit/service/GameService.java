@@ -1,11 +1,9 @@
 package com.drawit.drawit.service;
 
-import com.drawit.drawit.entity.GameParticipant;
-import com.drawit.drawit.entity.GameRoom;
-import com.drawit.drawit.entity.User;
-import com.drawit.drawit.repository.GameParticipantRepository;
-import com.drawit.drawit.repository.GameRoomRepository;
-import com.drawit.drawit.repository.UserRepository;
+import com.drawit.drawit.dto.GameRoundDto;
+import com.drawit.drawit.dto.response.GameGuessResponseDto;
+import com.drawit.drawit.entity.*;
+import com.drawit.drawit.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +21,8 @@ public class GameService {
     private final UserRepository userRepository;
     private final GameRoomRepository gameRoomRepository;
     private final GameParticipantRepository gameParticipantRepository;
-
+    private final GameRoundRepository gameRoundRepository;
+    private final GameGuessRepository gameGuessRepository;
     @Transactional
     public Map<String, Object> makeRoom(Long userId) {
         // 1. 호스트 User 조회
@@ -44,6 +43,7 @@ public class GameService {
                 .gameRoom(newGameRoom) // 관계 설정
                 .pointsEarned(0) // 초기 점수
                 .joinedAt(LocalDateTime.now())
+                .isDraw(false)
                 .build();
 
         // 4. 양방향 관계 설정
@@ -93,6 +93,7 @@ public class GameService {
                 .gameRoom(gameRoom)
                 .pointsEarned(0)
                 .joinedAt(LocalDateTime.now())
+                .isDraw(false)
                 .build();
 
         gameParticipantRepository.save(participant);
@@ -128,6 +129,119 @@ public class GameService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 게임 시작 처리
+     */
+    @Transactional
+    public GameRoundDto startGame(Long hostId, Long roomId) {
+        // GameRoom 조회
+        GameRoom gameRoom = gameRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
+
+        // 호스트 검증
+        if (!gameRoom.getHost().getId().equals(hostId)) {
+            throw new IllegalArgumentException("Only the host can start the game");
+        }
+
+        // 상태 변경
+        gameRoom.setStatus(GameRoom.RoomStatus.START);
+        GameRoundDto gameRoundDto = nextRound(gameRoom.getId());
+
+        if (gameRoom.getGameRounds() == null) {
+            gameRoom.setGameRounds(new ArrayList<>());
+        }
+
+        gameRoom.getGameRounds().add(gameRoundRepository.findById(gameRoundDto.getGameRoundId())
+                .orElseThrow(() -> new IllegalArgumentException("Game round not found") ));
+        gameRoomRepository.save(gameRoom);
+
+        return gameRoundDto;
+
+    }
+
+    @Transactional
+    public GameRoundDto nextRound(Long gameRoomId) {
+        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId)
+                .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
+
+        List<GameParticipant> participants = gameRoom.getParticipants();
+        if (participants.isEmpty()) {
+            throw new IllegalStateException("No participants in the room");
+        }
+
+        GameRound gameRound = new GameRound();
+        GameParticipant drawerParticipant = participants.stream()
+                .filter(p -> !p.getIsDraw()) // 아직 Drawer가 아닌 참가자
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No eligible drawer available"));
+
+        gameRound.setDrawer(drawerParticipant.getUser());
+        drawerParticipant.setIsDraw(true);
+        gameParticipantRepository.save(drawerParticipant);
+
+        String correctWord = "바보";
+
+        gameRound.setGameRoom(gameRoom);
+        gameRound.setRoundNumber(gameRoom.getGameRounds().size() + 1);
+        gameRound.setCorrectWord(correctWord);
+        gameRound.setImageUrl("");
+        gameRound.setStartedAt(LocalDateTime.now());
+        gameRoundRepository.save(gameRound);
+
+        return GameRoundDto.builder()
+                .gameRoundId(gameRound.getId())
+                .gameRoomId(gameRoom.getId())
+                .drawerNickname(gameRound.getDrawer().getNickname())
+                .correctWord(correctWord)
+                .roundNumber(gameRound.getRoundNumber())
+                .startedAt(gameRound.getStartedAt())
+                .build();
+    }
+
+
+    /**
+     * 사용자 추측 단어 처리
+     */
+    @Transactional
+    public GameGuessResponseDto processGuess(Long participantId, Long roundId, String guessedWord) {
+        // GameRound와 정답 단어 가져오기
+        GameRound gameRound = gameRoundRepository.findById(roundId)
+                .orElseThrow(() -> new IllegalArgumentException("Game round not found"));
+
+        String correctWord = gameRound.getCorrectWord();
+
+        // GameParticipant 확인
+        GameParticipant participant = gameParticipantRepository.findById(participantId)
+                .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
+
+        // 유사도 계산 (가정된 함수 사용)
+        double similarity = calculateSimilarity(correctWord, guessedWord);
+
+        // 점수 계산
+        int pointsEarned = (int) (similarity * 100);
+
+        // GameGuess 생성 및 저장
+        GameGuess gameGuess = GameGuess.builder()
+                .gameRound(gameRound)
+                .participant(participant)
+                .guessedWord(guessedWord)
+                .similarity(similarity)
+                .pointsEarned(pointsEarned)
+                .build();
+
+        gameGuessRepository.save(gameGuess);
+
+        // 응답 데이터 생성
+        return GameGuessResponseDto.builder()
+                .guessedWord(guessedWord)
+                .similarity(similarity)
+                .pointsEarned(pointsEarned)
+                .build();
+    }
+    private double calculateSimilarity(String correctWord, String guessedWord) {
+        // 실제 유사도 계산 함수 구현 또는 외부 라이브러리 호출
+        return 0.5;
+    }
     /**
      * 사용자 ID로 닉네임 조회
      */

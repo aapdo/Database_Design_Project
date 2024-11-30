@@ -31,9 +31,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .securityMatcher("/ws/**") // WebSocket 엔드포인트 매칭
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .authorizeHttpRequests(auth -> auth
                         //.anyRequest().permitAll()
-                        .requestMatchers("/users/login", "/users/register", "/ws/**", "/info").permitAll()
+                        .requestMatchers("/users/login", "/users/register", "/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

@@ -27,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String token = resolveToken(request);
+        log.info("Handshake Query Parameters: " + request.getRequestURL());
         if (token == null || token.isEmpty()) {
             log.info(request.getHeader("Authorization"));
             log.info("jwt token missing");

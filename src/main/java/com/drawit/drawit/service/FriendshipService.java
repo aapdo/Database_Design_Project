@@ -39,13 +39,15 @@ public class FriendshipService {
         log.info("sender: " + sender.getNickname());
         User recipient = userRepository.findByNickname(recipientNickname)
                 .orElseThrow(() -> new IllegalArgumentException("Recipient not found with ID: " + recipientNickname));
-        log.info("receiver: " + recipient.getNickname());
+        log.info("receiver: " + recipient.getNickname() );
 
         Friendship friendship = new Friendship();
+        friendship.setStatus(Friendship.AcceptStatus.WAIT);
         friendship.setUser(sender);
         friendship.setFriend(recipient);
-        friendship.setStatus(Friendship.AcceptStatus.WAIT);
         friendship.setCreatedAt(LocalDateTime.now());
+
+        friendshipRepository.save(friendship);
 
         return FriendDto.builder()
                 .id(friendship.getId())

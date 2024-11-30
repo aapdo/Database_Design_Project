@@ -13,14 +13,14 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
     // 쿼리 메서드 정의
     List<Friendship> findByFriendNicknameAndStatus(String nickname, Friendship.AcceptStatus status);
 
-    // JPQL 쿼리 사용 예제
-    @Query("SELECT f FROM Friendship f WHERE f.friend.nickname = :nickname AND f.status = :status")
-    List<Friendship> findFriendshipsByNicknameAndStatus(
-            @Param("nickname") String nickname,
-            @Param("status") Friendship.AcceptStatus status);
-
-    @Query("SELECT f.friend.id FROM Friendship f WHERE f.user.id = :userId AND f.status = 'ACCEPT' " +
-            "UNION SELECT f.user.id FROM Friendship f WHERE f.friend.id = :userId AND f.status = 'ACCEPT'")
+    @Query("SELECT f.friend.id FROM Friendship f WHERE f.user.id = :userId AND f.status = com.drawit.drawit.entity.Friendship$AcceptStatus.ACCEPT " +
+            "UNION SELECT f.user.id FROM Friendship f WHERE f.friend.id = :userId AND f.status = com.drawit.drawit.entity.Friendship$AcceptStatus.ACCEPT")
     List<Long> findFriendsByUserId(@Param("userId") Long userId);
 
+    // 별도의 쿼리 메서드로 유사 기능 제공
+    @Query("SELECT f.friend.id FROM Friendship f WHERE f.user.id = :userId AND f.status = com.drawit.drawit.entity.Friendship$AcceptStatus.ACCEPT")
+    List<Long> findFriendsByUserIdAsFriend(@Param("userId") Long userId);
+
+    @Query("SELECT f.user.id FROM Friendship f WHERE f.friend.id = :userId AND f.status = com.drawit.drawit.entity.Friendship$AcceptStatus.ACCEPT")
+    List<Long> findFriendsByUserIdAsUser(@Param("userId") Long userId);
 }

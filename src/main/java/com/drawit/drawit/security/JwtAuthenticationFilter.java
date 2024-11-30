@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.info(request.getHeader("Authorization"));
             log.info("jwt token missing");
             token = request.getParameter("token");
-
+            log.info("query string token: " + token);
         }
 
         if (token != null && jwtTokenProvider.validateToken(token)) {

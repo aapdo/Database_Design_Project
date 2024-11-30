@@ -62,17 +62,10 @@ public class User {
     @JsonIgnore
     private List<Purchase> purchases;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Post> posts;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<GameParticipant> gameParticipants;
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Comment> comments;
 
     @OneToMany(mappedBy = "drawer", fetch = FetchType.LAZY)
     @JsonIgnore

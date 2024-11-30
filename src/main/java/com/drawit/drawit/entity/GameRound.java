@@ -46,6 +46,4 @@ public class GameRound {
     @OneToMany(mappedBy = "gameRound", fetch = FetchType.LAZY)
     private List<GameGuess> guesses;
 
-    @OneToOne(mappedBy = "gameRound", fetch = FetchType.LAZY)
-    private Post post;
 }

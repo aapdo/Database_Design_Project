@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-//@Component
+@Component
 public class ItemInitializer implements CommandLineRunner {
 
     private final ItemRepository itemRepository;

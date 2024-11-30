@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -101,12 +102,19 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
         // 현재 유저와 친구 관계인 사용자 목록
-        List<Long> friendIds = friendshipRepository.findFriendsByUserId(userId);
+        List<Long> friendIdsAsFriend = friendshipRepository.findFriendsByUserIdAsFriend(userId);
+        List<Long> friendIdsAsUser = friendshipRepository.findFriendsByUserIdAsUser(userId);
 
-        // 모든 유저 조회 후 친구 여부 판단
-        return userRepository.findAll().stream()
+        // 두 리스트를 합치고 중복 제거
+        List<Long> allFriendIds = Stream.concat(friendIdsAsFriend.stream(), friendIdsAsUser.stream())
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 친구 ID와 현재 유저 제외한 사용자 가져오기
+        return userRepository.findAll().stream() // 가능하면 findAll 대신 필요한 사용자만 조회하도록 수정
+                .filter(user -> !user.getId().equals(userId)) // 자기 자신 제외
                 .map(user -> {
-                    boolean isFriend = friendIds.contains(user.getId());
+                    boolean isFriend = allFriendIds.contains(user.getId());
                     return toUserListDto(user, isFriend);
                 })
                 .collect(Collectors.toList());

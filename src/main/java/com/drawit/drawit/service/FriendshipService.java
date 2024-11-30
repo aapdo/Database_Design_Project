@@ -11,6 +11,7 @@ import com.drawit.drawit.repository.FriendshipRepository;
 import com.drawit.drawit.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FriendshipService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
@@ -30,6 +32,8 @@ public class FriendshipService {
      */
     @Transactional
     public FriendDto addFriend(String senderNickname, String recipientNickname) {
+        log.info("senderNickname: " + senderNickname);
+        log.info("receiverNickname: " + recipientNickname);
         User sender = userRepository.findByNickname(senderNickname)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found with ID: " + senderNickname));
         User recipient = userRepository.findByNickname(recipientNickname)

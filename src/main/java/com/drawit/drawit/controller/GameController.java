@@ -16,6 +16,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -127,7 +131,6 @@ public class GameController {
     public void startGame(@Payload Map<String, Object> payload, WebSocketSession session) {
         Long hostId = getUserIdFromSession(session);
         Long roomId = ((Number) payload.get("roomId")).longValue();
-        String imageUrl = "";
 
         // 게임 시작 처리
         GameRoundDto gameRoundDto = gameService.startGame(hostId, roomId);
@@ -146,6 +149,39 @@ public class GameController {
                     )
             );
         }
+    }
+
+    @MessageMapping("/nextRound")
+    public void nextRound(@Payload Map<String, Object> payload) {
+        Long roomId = (Long) payload.get("roomId");
+
+        GameRoundDto gameRoundDto = gameService.nextRound(roomId);
+        List<Long> participantUserIds = gameService.getParticipantUserIdsByRoomId(roomId);
+        for (Long userId : participantUserIds) {
+            messagingTemplate.convertAndSendToUser(
+                    userId.toString(),
+                    "/queue/gameNextRound",
+                    Map.of(
+                            "roomId", roomId,
+                            "roundNumber", gameRoundDto.getRoundNumber(),
+                            "drawerNickname", gameRoundDto.getDrawerNickname(),
+                            "correctWord", gameRoundDto.getCorrectWord()
+                    )
+            );
+        }
+    }
+
+    @MessageMapping("/endRound")
+    public void endRound(@Payload Map<String, Object> payload) {
+        Long gameRoundId = Long.valueOf((Integer) payload.get("gameRoundId"));
+        byte[] imageBytes = (byte[]) payload.get("imageData"); // 바이너리 데이터
+
+
+    }
+
+    @MessageMapping("/endGame")
+    public void endGame(@Payload Map<String, Object> payload) {
+
     }
 
     /**

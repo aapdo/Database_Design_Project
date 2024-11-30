@@ -8,7 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -238,6 +242,30 @@ public class GameService {
                 .pointsEarned(pointsEarned)
                 .build();
     }
+
+    public void saveImage(Long gameRoundId, byte[] imageBytes) {
+        LocalDateTime localDateTime = LocalDateTime.now();
+        // 파일 저장 경로 설정
+        String timestamp = localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String fileName = "game_round_" + gameRoundId + "_" + timestamp + ".png";
+        String filePath = "./drawImages" + fileName; // 저장할 디렉터리 경로
+        // 파일 저장
+        File file = new File(filePath);
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(imageBytes);
+        } catch (IOException e) {
+            throw new RuntimeException("Can't save image");
+        }
+
+        GameRound gameRound = gameRoundRepository.findById(gameRoundId)
+                .orElseThrow(() -> new IllegalArgumentException("Game round not found"));
+
+        gameRound.setEndedAt(localDateTime);
+        gameRound.setImageUrl(filePath);
+
+
+    }
+
     private double calculateSimilarity(String correctWord, String guessedWord) {
         // 실제 유사도 계산 함수 구현 또는 외부 라이브러리 호출
         return 0.5;

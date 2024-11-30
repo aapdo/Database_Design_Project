@@ -1,6 +1,7 @@
 package com.drawit.drawit.security;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.socket.WebSocketHandler;
@@ -9,6 +10,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import java.util.Map;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -17,6 +19,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         // Query Parameter에서 JWT 추출
         String jwtToken = extractJwtFromRequest(request);
+        log.info("socket jwt: " + jwtToken);
 
         // JWT 검증
         if (jwtTokenProvider.validateToken(jwtToken)) {

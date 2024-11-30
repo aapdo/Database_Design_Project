@@ -2,13 +2,16 @@ package com.drawit.drawit.configuration;
 
 import com.drawit.drawit.security.JwtHandshakeInterceptor;
 import com.drawit.drawit.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -23,7 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // 클라이언트가 WebSocket 서버에 연결할 엔드포인트 설정
         registry.addEndpoint("/ws")
-                .addInterceptors(new JwtHandshakeInterceptor(new JwtTokenProvider()))
+                //.addInterceptors(new JwtHandshakeInterceptor(jwtTokenProvider))
                 .setAllowedOrigins("http://localhost:3000", "http://localhost:8081") // CORS 설정
                 .withSockJS(); // SockJS를 통한 fallback 지원
 

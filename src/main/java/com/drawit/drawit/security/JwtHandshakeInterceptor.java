@@ -29,6 +29,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             attributes.put("nickname", jwtTokenProvider.getNickname(jwtToken));
             return true; // 인증 성공
         } else {
+            log.warn("Invalid or missing JWT token");
             return false; // 인증 실패
         }
     }
@@ -36,12 +37,17 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                WebSocketHandler wsHandler, Exception exception) {
-        // 인증 이후 처리 로직 (필요 시)
+        log.info("aszss");
     }
 
     private String extractJwtFromRequest(ServerHttpRequest request) {
         // Query Parameter에서 JWT 추출 (예: ?token=jwt_value)
-        return request.getURI().getQuery().split("token=")[1];
+        String query = request.getURI().getQuery();
+        log.info("extractJwt query: " + query);
+        if (query != null && query.contains("token=")) {
+            return query.split("token=")[1];
+        }
+        return null; // 토큰이 없는 경우 null 반환
     }
 
     private boolean isValidJwt(String jwtToken) {

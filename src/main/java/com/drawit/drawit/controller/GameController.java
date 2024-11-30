@@ -37,13 +37,12 @@ public class GameController {
 
     @MessageMapping("/makeRoom")
     // return room number
-    public void makeRoom(WebSocketSession session) {
-        Long userId = this.getUserIdFromSession(session);
+    public void makeRoom(@Payload Map<String, Object> payload) {
+        Long userId = (Long) payload.get("userId");
         Map<String, Object> ret = gameService.makeRoom(userId);
         // 대기 중인 요청을 클라이언트로 전송
-        messagingTemplate.convertAndSendToUser(
-                userId.toString(),
-                "/roomHost",
+        messagingTemplate.convertAndSend(
+                "/roomHost/" + ret.get("hostNickname"),
                 Map.of(
                         "gameRoomId", ret.get("gameRoomId"),
                         "participantId", ret.get("participantId")
@@ -57,24 +56,22 @@ public class GameController {
      * 친구 초대 요청
      */
     @MessageMapping("/inviteRoom")
-    public void inviteRoom(@Payload RequestInviteRoomDto requestInviteRoomDto, WebSocketSession session) {
-        Long hostId = getUserIdFromSession(session);
+    public void inviteRoom(@Payload RequestInviteRoomDto requestInviteRoomDto) {
+        String hostNickname = requestInviteRoomDto.getHostNickname();
 
         // 초대 처리
-        Long receiverId = gameService.inviteFriendToRoom(
-                hostId,
+         String receiverNickname = gameService.inviteFriendToRoom(
+                hostNickname,
                 requestInviteRoomDto.getRoomId(),
                 requestInviteRoomDto.getReceiverNickname()
         );
 
         // 초대 받은 사용자에게 알림
-        messagingTemplate.convertAndSendToUser(
-                receiverId.toString(),
-                "/queue/inviteRoom",
+        messagingTemplate.convertAndSend(
+                "/queue/inviteRoom/" + receiverNickname ,
                 Map.of(
                         "roomId", requestInviteRoomDto.getRoomId(),
-                        "hostId", hostId,
-                        "hostNickname", requestInviteRoomDto.getHostId()
+                        "hostNickname", hostNickname
                 )
         );
     }
@@ -83,44 +80,29 @@ public class GameController {
      * 초대 수락
      */
     @MessageMapping("/acceptInvite")
-    public void acceptInvite(@Payload Map<String, Object> payload, WebSocketSession session) {
-        Long userId = getUserIdFromSession(session);
+    public void acceptInvite(@Payload Map<String, Object> payload) {
         Long roomId = ((Number) payload.get("roomId")).longValue();
+        String userNickname = (String) payload.get("userNickname");
+
+
 
         // 초대 수락 및 참가자 추가
-        Long participantId = gameService.acceptInvite(userId, roomId);
+        Long participantId = gameService.acceptInvite(userNickname, roomId);
 
         // 방 정보 가져오기
         Map<String, Object> roomInfo = gameService.getRoomInfo(roomId);
         String hostNickname = (String) roomInfo.get("hostNickname");
-        List<String> participantNicknames = (List<String>) roomInfo.get("participantNicknames");
-        String newParticipantNickname = gameService.getUserNicknameById(userId);
+        List<String> participantNicknameList = (List<String>) roomInfo.get("participantNicknameList");
 
-        // 초대를 수락한 사용자에게 방 정보 전송
-        messagingTemplate.convertAndSendToUser(
-                userId.toString(),
-                "/queue/acceptInvite",
-                Map.of(
-                        "roomId", roomId,
-                        "participantId", participantId,
-                        "hostNickname", hostNickname,
-                        "participantNicknames", participantNicknames
-                )
-        );
-
-        // 기존 참가자들에게 새로 들어온 참가자 정보 알림
-        List<Long> participantUserIds = gameService.getParticipantUserIdsByRoomId(roomId);
-        for (Long participantUserId : participantUserIds) {
-            if (!participantUserId.equals(userId)) { // 기존 참가자에게만 전송
-                messagingTemplate.convertAndSendToUser(
-                        participantUserId.toString(),
-                        "/queue/newParticipant",
-                        Map.of(
-                                "roomId", roomId,
-                                "newParticipantNickname", newParticipantNickname
-                        )
-                );
-            }
+        for (String nickname : participantNicknameList) {
+            messagingTemplate.convertAndSend(
+                    "/queue/newParticipant/"+ nickname,
+                    Map.of(
+                            "roomId", roomId,
+                            "participantNicknameList", participantNicknameList,
+                            "hostNickname", hostNickname
+                    )
+            );
         }
     }
 
@@ -128,19 +110,17 @@ public class GameController {
      * 게임 시작 요청
      */
     @MessageMapping("/startGame")
-    public void startGame(@Payload Map<String, Object> payload, WebSocketSession session) {
-        Long hostId = getUserIdFromSession(session);
+    public void startGame(@Payload Map<String, Object> payload) {
         Long roomId = ((Number) payload.get("roomId")).longValue();
 
         // 게임 시작 처리
-        GameRoundDto gameRoundDto = gameService.startGame(hostId, roomId);
+        GameRoundDto gameRoundDto = gameService.startGame(roomId);
 
         // 모든 참가자에게 게임 시작 알림
-        List<Long> participantUserIds = gameService.getParticipantUserIdsByRoomId(roomId);
-        for (Long userId : participantUserIds) {
-            messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
-                    "/queue/gameStart",
+        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(roomId);
+        for (String userNickname : participantUserNicknameList) {
+            messagingTemplate.convertAndSend(
+                    "/queue/gameStart/" + userNickname,
                     Map.of(
                             "roomId", roomId,
                             "roundNumber", gameRoundDto.getRoundNumber(),
@@ -156,11 +136,10 @@ public class GameController {
         Long roomId = (Long) payload.get("roomId");
 
         GameRoundDto gameRoundDto = gameService.nextRound(roomId);
-        List<Long> participantUserIds = gameService.getParticipantUserIdsByRoomId(roomId);
-        for (Long userId : participantUserIds) {
-            messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
-                    "/queue/gameNextRound",
+        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(roomId);
+        for (String userNickname : participantUserNicknameList) {
+            messagingTemplate.convertAndSend(
+                    "/queue/gameNextRound/" + userNickname,
                     Map.of(
                             "roomId", roomId,
                             "roundNumber", gameRoundDto.getRoundNumber(),

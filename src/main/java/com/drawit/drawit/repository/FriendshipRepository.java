@@ -19,4 +19,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
             @Param("nickname") String nickname,
             @Param("status") Friendship.AcceptStatus status);
 
+    @Query("SELECT f.friend.id FROM Friendship f WHERE f.user.id = :userId AND f.status = 'ACCEPT' " +
+            "UNION SELECT f.user.id FROM Friendship f WHERE f.friend.id = :userId AND f.status = 'ACCEPT'")
+    List<Long> findFriendsByUserId(@Param("userId") Long userId);
+
 }

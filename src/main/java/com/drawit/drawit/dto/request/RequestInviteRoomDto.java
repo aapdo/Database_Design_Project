@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestInviteRoomDto {
-    private Long hostId;
+    private String hostNickname;
     private Long roomId;
     private String receiverNickname;
 }

@@ -1,10 +1,12 @@
 package com.drawit.drawit.service;
 
 import com.drawit.drawit.dto.UserDto;
+import com.drawit.drawit.dto.UserListDto;
 import com.drawit.drawit.entity.CustomUserDetails;
 import com.drawit.drawit.entity.Item;
 import com.drawit.drawit.entity.Purchase;
 import com.drawit.drawit.entity.User;
+import com.drawit.drawit.repository.FriendshipRepository;
 import com.drawit.drawit.repository.ItemRepository;
 import com.drawit.drawit.repository.PurchaseRepository;
 import com.drawit.drawit.repository.UserRepository;
@@ -31,6 +33,7 @@ public class UserService implements UserDetailsService {
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final FriendshipRepository friendshipRepository;
     private final PurchaseRepository purchaseRepository;
 
     // 로그인 ID 중복 체크
@@ -92,15 +95,33 @@ public class UserService implements UserDetailsService {
         return new UserDto(user);
     }
 
-    @Transactional
-    public List<UserDto> getUserList(){
-        List<User> users = userRepository.findAll();
-        List<UserDto> userDtoList = new ArrayList<>();
-        for (User user: users) {
-            userDtoList.add(new UserDto(user));
-        }
+    public List<UserListDto> getUserList(Long userId) {
+        // 기준 유저
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
-        return userDtoList;
+        // 현재 유저와 친구 관계인 사용자 목록
+        List<Long> friendIds = friendshipRepository.findFriendsByUserId(userId);
+
+        // 모든 유저 조회 후 친구 여부 판단
+        return userRepository.findAll().stream()
+                .map(user -> {
+                    boolean isFriend = friendIds.contains(user.getId());
+                    return toUserListDto(user, isFriend);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private UserListDto toUserListDto(User user, boolean isFriend) {
+        return new UserListDto(
+                user.getNickname(),
+                user.getTotalPoints(),
+                user.getCurrentPoints(),
+                user.getNicknameColor(),
+                user.getChattingColor(),
+                user.getCreatedAt(),
+                isFriend
+        );
     }
 
     @Transactional

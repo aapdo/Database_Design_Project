@@ -60,36 +60,37 @@ public class GameService {
         // 6. 생성된 GameRoom의 ID 반환
         return Map.of(
                 "gameRoomId", newGameRoom.getId(),
-                "participantId", gameParticipant.getId());
+                "participantId", gameParticipant.getId(),
+                "hostNickname", host.getNickname()
+        );
     }
 
     /**
-     * 친구 초대
-     * @return receiverId
+     * @return receiver nickname
      */
-    public Long inviteFriendToRoom(Long hostId, Long roomId, String receiverNickname) {
+    public String inviteFriendToRoom(String hostNickname, Long roomId, String receiverNickname) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
 
-        if (!gameRoom.getHost().getId().equals(hostId)) {
+        if (!gameRoom.getHost().getNickname().equals(hostNickname)) {
             throw new IllegalArgumentException("Only the host can invite friends");
         }
 
         User receiver = userRepository.findByNickname(receiverNickname)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        return receiver.getId();
+        return receiver.getNickname();
     }
 
     /**
      * 초대 수락 및 방 참여
      */
     @Transactional
-    public Long acceptInvite(Long userId, Long roomId) {
+    public Long acceptInvite(String userNickname, Long roomId) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByNickname(userNickname)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         GameParticipant participant = GameParticipant.builder()
@@ -113,23 +114,23 @@ public class GameService {
 
         String hostNickname = gameRoom.getHost().getNickname();
 
-        List<String> participantNicknames = gameParticipantRepository.findAllByGameRoomId(roomId).stream()
+        List<String> participantNicknameList = gameParticipantRepository.findAllByGameRoomId(roomId).stream()
                 .map(participant -> participant.getUser().getNickname())
                 .collect(Collectors.toList());
 
         Map<String, Object> roomInfo = new HashMap<>();
         roomInfo.put("hostNickname", hostNickname);
-        roomInfo.put("participantNicknames", participantNicknames);
+        roomInfo.put("participantNicknameList", participantNicknameList);
 
         return roomInfo;
     }
 
     /**
-     * 특정 방의 모든 참가자의 User ID 목록 가져오기
+     * 특정 방의 모든 참가자의 User nickname 목록 가져오기
      */
-    public List<Long> getParticipantUserIdsByRoomId(Long roomId) {
+    public List<String> getParticipantUserIdsByRoomId(Long roomId) {
         return gameParticipantRepository.findAllByGameRoomId(roomId).stream()
-                .map(participant -> participant.getUser().getId())
+                .map(participant -> participant.getUser().getNickname())
                 .collect(Collectors.toList());
     }
 
@@ -137,15 +138,11 @@ public class GameService {
      * 게임 시작 처리
      */
     @Transactional
-    public GameRoundDto startGame(Long hostId, Long roomId) {
+    public GameRoundDto startGame(Long roomId) {
         // GameRoom 조회
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
 
-        // 호스트 검증
-        if (!gameRoom.getHost().getId().equals(hostId)) {
-            throw new IllegalArgumentException("Only the host can start the game");
-        }
 
         // 상태 변경
         gameRoom.setStatus(GameRoom.RoomStatus.START);

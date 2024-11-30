@@ -1,6 +1,7 @@
 package com.drawit.drawit.controller;
 
 import com.drawit.drawit.dto.UserDto;
+import com.drawit.drawit.dto.UserListDto;
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.dto.response.ResponseUserDto;
 import com.drawit.drawit.entity.User;
@@ -27,15 +28,11 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<?> getUserList() {
-        List<ResponseUserDto> userList = new ArrayList<>();
-        List<UserDto> users = userService.getUserList();
-        int userSize = users.size();
+        Long userId =  Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
+        List<UserListDto> users = userService.getUserList(userId);
 
-        for (int i = 0; i < userSize; i++) {
-            userList.add(new ResponseUserDto(users.get(i)));
-        }
 
-        return ResponseEntity.ok(userList);
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("/{nickname}")

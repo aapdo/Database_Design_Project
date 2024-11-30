@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 public class RequestRespondFriendDto {
-    private Long requestId;
-    private Long senderId;
+    private Long friendshipId;
+    private String senderNickname;
+    private String receiverNickname;
     private Friendship.AcceptStatus status; // ACCEPT or REJECT
 }

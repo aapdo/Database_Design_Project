@@ -29,9 +29,9 @@ public class FriendshipService {
      * 친구 요청을 추가
      */
     @Transactional
-    public FriendDto addFriend(Long senderId, String recipientNickname) {
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found with ID: " + senderId));
+    public FriendDto addFriend(String senderNickname, String recipientNickname) {
+        User sender = userRepository.findByNickname(senderNickname)
+                .orElseThrow(() -> new IllegalArgumentException("Sender not found with ID: " + senderNickname));
         User recipient = userRepository.findByNickname(recipientNickname)
                 .orElseThrow(() -> new IllegalArgumentException("Recipient not found with ID: " + recipientNickname));
 
@@ -59,15 +59,15 @@ public class FriendshipService {
      * 대기 중인 친구 요청 조회
      */
     @Transactional(readOnly = true)
-    public List<ResponseFriendshipDto> getPendingRequests(Long userId) {
+    public List<ResponseFriendshipDto> getPendingRequests(String receiverNickname) {
         List<ResponseFriendshipDto> friendDtoList = new ArrayList<>();
-        for (Friendship friendship : friendshipRepository.findAllByFriendIdAndStatus(userId, Friendship.AcceptStatus.WAIT)) {
+        for (Friendship friendship : friendshipRepository.findByFriendNicknameAndStatus(receiverNickname, Friendship.AcceptStatus.WAIT)) {
             friendDtoList.add(ResponseFriendshipDto.builder()
-                            .id(friendship.getId())
+                            .friendshipId(friendship.getId())
                             .status(friendship.getStatus())
                             .receiverId(friendship.getFriend().getId())
-                            .senderId(friendship.getUser().getId())
                             .senderNickname(friendship.getUser().getNickname())
+                            .receiverNickname(friendship.getFriend().getNickname())
                     .build());
         }
         return friendDtoList;

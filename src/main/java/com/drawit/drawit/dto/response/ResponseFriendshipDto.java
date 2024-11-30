@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ResponseFriendshipDto {
-    private Long id;
+    private Long friendshipId;
     private Friendship.AcceptStatus status;
-    private Long senderId;
     private String senderNickname;
+    private String receiverNickname;
     private Long receiverId;
 }

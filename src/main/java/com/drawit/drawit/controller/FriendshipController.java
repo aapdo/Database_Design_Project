@@ -26,9 +26,17 @@ public class FriendshipController {
 
 
     @MessageMapping("/addFriend")
-    public void addFriend(RequestAddFriendDto requestAddFriendDto, WebSocketSession session) {
-        FriendDto friendDto = friendshipService.addFriend(this.getUserIdFromSession(session), requestAddFriendDto.getReceiverNickname());
+    public void addFriend(@Payload RequestAddFriendDto requestAddFriendDto) {
+        FriendDto friendDto = friendshipService.addFriend(requestAddFriendDto.getSenderNickname(), requestAddFriendDto.getReceiverNickname());
 
+
+        messagingTemplate.convertAndSend(
+                "/queue/friendRequests/" + requestAddFriendDto.getReceiverNickname(),
+                Map.of(
+                        "requestId", friendDto.getId(), // 요청 받는 사람이 받는 것: 요청 id
+                        "senderNickname", requestAddFriendDto.getSenderNickname()) // + sender nickname
+        );
+        /*
         // 요청 수신자에게 실시간으로 메시지 전송
         messagingTemplate.convertAndSendToUser(
                 friendDto.getReceiverId().toString(), // 요청 받는 아이디를 가진 클라이언트에게
@@ -37,43 +45,46 @@ public class FriendshipController {
                         "requestId", friendDto.getId(), // 요청 받는 사람이 받는 것: 요청 id
                         "senderNickname", requestAddFriendDto.getSenderNickname()) // + sender nickname
         );
+        */
     }
 
     /**
      * B가 친구 요청을 수락하거나 거절
      */
     @MessageMapping("/respondToFriendRequest")
-    public void respondToFriendRequest(RequestRespondFriendDto requestRespondFriendDto) {
+    public void respondToFriendRequest(@Payload RequestRespondFriendDto requestRespondFriendDto) {
         friendshipService.respondToFriendRequest(
-                requestRespondFriendDto.getRequestId(),
+                requestRespondFriendDto.getFriendshipId(),
                 requestRespondFriendDto.getStatus()
         );
-
+        // 친구 요청을 보낸 A에게 결과 알림
+        messagingTemplate.convertAndSend(
+                "/queue/friendResponses/" + requestRespondFriendDto.getSenderNickname(),
+                requestRespondFriendDto
+        );
+        /*
         // 친구 요청을 보낸 A에게 결과 알림
         messagingTemplate.convertAndSendToUser(
                 requestRespondFriendDto.getSenderId().toString(),
                 "/queue/friendResponses",
                 requestRespondFriendDto
         );
+
+         */
     }
 
     /**
      * B가 대기 중인 친구 요청을 조회
      */
     @MessageMapping("/getPendingRequests")
-    public void getPendingRequests(Long userId) {
-        List<ResponseFriendshipDto> pendingRequests = friendshipService.getPendingRequests(userId);
+    public void getPendingRequests(@Payload Map<String, Object> payload) {
+        String nickname = (String) payload.get("receiverNickname");
+        List<ResponseFriendshipDto> pendingRequests = friendshipService.getPendingRequests(nickname);
 
         // 대기 중인 요청을 클라이언트로 전송
-        messagingTemplate.convertAndSendToUser(
-                userId.toString(),
-                "/queue/pendingFriendRequests",
+        messagingTemplate.convertAndSend(
+                "/queue/pendingFriendRequests/"+nickname,
                 pendingRequests
         );
-    }
-
-
-    private Long getUserIdFromSession(WebSocketSession session) {
-        return (Long) session.getAttributes().get("userId");
     }
 }

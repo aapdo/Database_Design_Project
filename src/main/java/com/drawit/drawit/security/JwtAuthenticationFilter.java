@@ -27,9 +27,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String token = resolveToken(request);
-        if (token == null) {
+        if (token == null || token.isEmpty()) {
             log.info(request.getHeader("Authorization"));
             log.info("jwt token missing");
+            token = request.getParameter("token");
+
         }
 
         if (token != null && jwtTokenProvider.validateToken(token)) {

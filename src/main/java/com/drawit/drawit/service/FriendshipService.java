@@ -41,7 +41,12 @@ public class FriendshipService {
         friendship.setStatus(Friendship.AcceptStatus.WAIT);
         friendship.setCreatedAt(LocalDateTime.now());
 
-        return this.friendshipToFriendDto(friendshipRepository.save(friendship));
+        return FriendDto.builder()
+                .id(friendship.getId())
+                .status(Friendship.AcceptStatus.WAIT)
+                .receiverId(friendship.getFriend().getId())
+                .senderId(friendship.getUser().getId())
+                .build();
     }
     /**
      * 친구 요청에 대한 응답 처리
@@ -77,7 +82,5 @@ public class FriendshipService {
     public ResponseUserDto userToResponseUserDto(User user) {
         return objectMapper.convertValue(user, ResponseUserDto.class);
     }
-    public FriendDto friendshipToFriendDto(Friendship friendship) {
-        return objectMapper.convertValue(friendship, FriendDto.class);
-    }
+
 }

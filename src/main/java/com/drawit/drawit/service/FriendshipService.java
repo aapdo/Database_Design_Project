@@ -36,8 +36,10 @@ public class FriendshipService {
         log.info("receiverNickname: " + recipientNickname);
         User sender = userRepository.findByNickname(senderNickname)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found with ID: " + senderNickname));
+        log.info("sender: " + sender);
         User recipient = userRepository.findByNickname(recipientNickname)
                 .orElseThrow(() -> new IllegalArgumentException("Recipient not found with ID: " + recipientNickname));
+        log.info("receiver: " + recipient);
 
         Friendship friendship = new Friendship();
         friendship.setUser(sender);

@@ -207,7 +207,7 @@ public class GameService {
             log.info("response body: " + response.getBody());
             Map<String, Object> responseBody = new ObjectMapper().readValue(response.getBody(), Map.class);
             correctWord = responseBody.get("randomWord").toString();
-            //log.info("랜덤 단어: " +  correctWord);
+            log.info("랜덤 단어: " +  correctWord);
         } catch (Exception e) {
             throw new RuntimeException("Error fetching random word", e);
         }

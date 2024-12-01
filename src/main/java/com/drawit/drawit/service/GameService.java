@@ -129,7 +129,7 @@ public class GameService {
     /**
      * 특정 방의 모든 참가자의 User nickname 목록 가져오기
      */
-    public List<String> getParticipantUserIdsByRoomId(Long roomId) {
+    public List<String> getParticipantUserNicknamesByRoomId(Long roomId) {
         return gameParticipantRepository.findAllByGameRoomId(roomId).stream()
                 .map(participant -> participant.getUser().getNickname())
                 .collect(Collectors.toList());
@@ -303,6 +303,49 @@ public class GameService {
         }
 
         return result;
+    }
+
+    public Map<String, Object> getGameResult(Long gameRoomId) {
+        // 게임 방의 모든 라운드 가져오기
+        List<GameRound> gameRounds = gameRoundRepository.findByGameRoomId(gameRoomId);
+
+        // 게임 결과 데이터
+        List<Map<String, Object>> roundResults = new ArrayList<>();
+
+        for (GameRound round : gameRounds) {
+            // 그림을 그린 사람 닉네임
+            String drawerNickname = round.getDrawer().getNickname();
+
+            // 라운드 참가자들의 추측 중 가장 유사도가 높은 답
+            List<GameGuess> guesses = round.getGuesses();
+            Map<String, Map<String, Object>> participantResults = new HashMap<>();
+
+            for (GameGuess guess : guesses) {
+                String participantNickname = guess.getParticipant().getUser().getNickname();
+
+                // 현재 참가자의 가장 유사도가 높은 단어 찾기
+                participantResults.computeIfAbsent(participantNickname, k -> new HashMap<>());
+                if (participantResults.get(participantNickname).isEmpty() ||
+                        (Double) participantResults.get(participantNickname).get("similarity") < guess.getSimilarity()) {
+                    participantResults.get(participantNickname).put("guessedWord", guess.getGuessedWord());
+                    participantResults.get(participantNickname).put("similarity", guess.getSimilarity());
+                }
+            }
+
+            // 라운드 결과 저장
+            roundResults.add(Map.of(
+                    "roundNumber", round.getRoundNumber(),
+                    "drawerNickname", drawerNickname,
+                    "imageURL", round.getImageUrl(),
+                    "participantResults", participantResults
+            ));
+        }
+
+        // 게임 전체 결과 반환
+        return Map.of(
+                "gameRoomId", gameRoomId,
+                "roundResults", roundResults
+        );
     }
 
     private double calculateSimilarity(String correctWord, String guessedWord) {

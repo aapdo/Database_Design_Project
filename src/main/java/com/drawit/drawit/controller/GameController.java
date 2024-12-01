@@ -3,14 +3,10 @@ package com.drawit.drawit.controller;
 import com.drawit.drawit.dto.GameRoundDto;
 import com.drawit.drawit.dto.request.GuessWordRequestDto;
 import com.drawit.drawit.dto.request.RequestInviteRoomDto;
-import com.drawit.drawit.dto.request.RequestJoinRoomDto;
 import com.drawit.drawit.dto.response.GameGuessResponseDto;
-import com.drawit.drawit.entity.GameParticipant;
-import com.drawit.drawit.entity.GameRound;
 import com.drawit.drawit.service.GameService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -18,10 +14,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -31,12 +23,6 @@ import java.util.Map;
 public class GameController {
     private final GameService gameService;
     private final SimpMessagingTemplate messagingTemplate;
-    @MessageMapping("/message")
-    @SendTo("/game/response")
-    public String handleMessage(String message) {
-        return "Server received: " + message;
-    }
-
 
     @MessageMapping("/makeRoom")
     // return room number
@@ -44,9 +30,11 @@ public class GameController {
         String userNickname = (String) payload.get("userNickname");
         Map<String, Object> ret = gameService.makeRoom(userNickname);
         // 대기 중인 요청을 클라이언트로 전송
+        /*
         log.info("make room. host: " + userNickname);
         log.info("gameRoomId: " + ret.get("gameRoomId"));
         log.info("participantId: " + ret.get("participantId"));
+         */
         messagingTemplate.convertAndSend(
                 "/queue/roomHost/" + userNickname,
                 Map.of(
@@ -54,10 +42,8 @@ public class GameController {
                         "participantId", ret.get("participantId")
                 )
         );
-        log.info("OMG");
 
     }
-
 
     /**
      * 친구 초대 요청
@@ -65,6 +51,7 @@ public class GameController {
     @MessageMapping("/inviteRoom")
     public void inviteRoom(@Payload RequestInviteRoomDto requestInviteRoomDto) {
         String hostNickname = requestInviteRoomDto.getHostNickname();
+        log.info("초대 보낸 사람 닉네임: "+ hostNickname);
 
         // 초대 처리
          String receiverNickname = gameService.inviteFriendToRoom(
@@ -72,6 +59,7 @@ public class GameController {
                 requestInviteRoomDto.getRoomId(),
                 requestInviteRoomDto.getReceiverNickname()
         );
+        log.info("초대 받은 사람 닉네임: "+ receiverNickname);
 
         // 초대 받은 사용자에게 알림
         messagingTemplate.convertAndSend(
@@ -122,10 +110,10 @@ public class GameController {
         GameRoundDto gameRoundDto = gameService.startGame(roomId);
 
         // 모든 참가자에게 게임 시작 알림
-        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(roomId);
+        List<String> participantUserNicknameList = gameService.getParticipantUserNicknamesByRoomId(roomId);
         for (String userNickname : participantUserNicknameList) {
             messagingTemplate.convertAndSend(
-                    "/queue/gameStart/" + userNickname,
+                    "/game/gameStart/" + userNickname,
                     Map.of(
                             "roomId", roomId,
                             "roundNumber", gameRoundDto.getRoundNumber(),
@@ -141,10 +129,10 @@ public class GameController {
         Long roomId = ((Number) payload.get("roomId")).longValue();
         byte[] imageBytes = (byte[]) payload.get("imageData"); // 바이너리 데이터
 
-        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(roomId);
+        List<String> participantUserNicknameList = gameService.getParticipantUserNicknamesByRoomId(roomId);
         for (String userNickname : participantUserNicknameList) {
             messagingTemplate.convertAndSend(
-                    "/queue/getPicture/" + userNickname,
+                    "/game/getPicture/" + userNickname,
                     Map.of(
                             "roomId", roomId,
                             // 이미지 데이터가 들어가야함.
@@ -169,7 +157,7 @@ public class GameController {
 
         // 결과 클라이언트로 전송
         messagingTemplate.convertAndSend(
-                "/queue/guessResult/"+requestDto.getUserNickname(),
+                "/game/guessResult/"+requestDto.getUserNickname(),
                 Map.of(
                         "guessedWord", responseDto.getGuessedWord(),
                         "similarity", responseDto.getSimilarity()
@@ -193,11 +181,11 @@ public class GameController {
 
         String imagePath = gameService.saveImage(gameRoundId, imageBytes);
         Map<String, Map<String, Object>> roundResult = gameService.endRound(gameRoomId, gameRoundId);
-        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(gameRoomId);
+        List<String> participantUserNicknameList = gameService.getParticipantUserNicknamesByRoomId(gameRoomId);
 
         for (String nickname : participantUserNicknameList) {
             messagingTemplate.convertAndSend(
-                    "/queue/endRound/" + nickname,
+                    "/game/endRound/" + nickname,
                     Map.of(
                             "gameRoomId", gameRoomId,
                             "gameRoundId", gameRoundId,
@@ -213,10 +201,10 @@ public class GameController {
         Long roomId = (Long) payload.get("roomId");
 
         GameRoundDto gameRoundDto = gameService.nextRound(roomId);
-        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(roomId);
+        List<String> participantUserNicknameList = gameService.getParticipantUserNicknamesByRoomId(roomId);
         for (String userNickname : participantUserNicknameList) {
             messagingTemplate.convertAndSend(
-                    "/queue/gameNextRound/" + userNickname,
+                    "/game/gameNextRound/" + userNickname,
                     Map.of(
                             "roomId", roomId,
                             "roundNumber", gameRoundDto.getRoundNumber(),
@@ -231,7 +219,17 @@ public class GameController {
     @MessageMapping("/endGame")
     public void endGame(@Payload Map<String, Object> payload) {
         Long gameRoomId = (Long) payload.get("gameRoomId");
+        // 전체 결과 생성
+        Map<String, Object> gameResult = gameService.getGameResult(gameRoomId);
 
+        // 모든 참가자들에게 결과 전송
+        List<String> participantUserNicknameList = gameService.getParticipantUserNicknamesByRoomId(gameRoomId);
+        for (String nickname : participantUserNicknameList) {
+            messagingTemplate.convertAndSend(
+                    "/queue/endGame/" + nickname,
+                    gameResult
+            );
+        }
     }
 
 

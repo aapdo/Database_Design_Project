@@ -33,8 +33,9 @@ public class UserController {
 
     @GetMapping("/test")
     public String test() {
-
-        return httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord=apple&guessedWord=orange");
+        String ret = httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord=apple&guessedWord=orange");
+        log.info("test flask" + ret);
+        return ret;
     }
 
     @GetMapping

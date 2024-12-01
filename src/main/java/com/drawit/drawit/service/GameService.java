@@ -32,10 +32,10 @@ public class GameService {
     @Value("${python.server.base-url}")
     private String pythonBaseUrl; // application.properties에서 값 주입
     @Transactional
-    public Map<String, Object> makeRoom(Long userId) {
+    public Map<String, Object> makeRoom(String userNickname) {
         // 1. 호스트 User 조회
-        User host = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+        User host = userRepository.findByNickname(userNickname)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userNickname));
 
         // 2. 새로운 GameRoom 생성 및 초기화
         GameRoom newGameRoom = GameRoom.builder()
@@ -225,7 +225,6 @@ public class GameService {
 
         // 점수 계산
         int pointsEarned = (int) (similarity * 100);
-        participant.setPointsEarned(participant.getPointsEarned() + pointsEarned);
         // GameGuess 생성 및 저장
         GameGuess gameGuess = GameGuess.builder()
                 .gameRound(gameRound)

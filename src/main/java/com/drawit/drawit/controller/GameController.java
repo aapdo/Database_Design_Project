@@ -38,8 +38,8 @@ public class GameController {
     @MessageMapping("/makeRoom")
     // return room number
     public void makeRoom(@Payload Map<String, Object> payload) {
-        Long userId = (Long) payload.get("userId");
-        Map<String, Object> ret = gameService.makeRoom(userId);
+        String userNickname = (String) payload.get("userNickname");
+        Map<String, Object> ret = gameService.makeRoom(userNickname);
         // 대기 중인 요청을 클라이언트로 전송
         messagingTemplate.convertAndSend(
                 "/roomHost/" + ret.get("hostNickname"),

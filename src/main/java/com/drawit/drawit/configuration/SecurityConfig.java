@@ -32,9 +32,9 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        //.anyRequest().permitAll()
-                        .requestMatchers("/users/login", "/users/register", "/users/test", "/ws/**").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
+                        //.requestMatchers("/users/login", "/users/register", "/users/test", "/ws/**").permitAll()
+                        //.anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(

@@ -14,10 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -208,7 +205,7 @@ public class GameService {
      * 사용자 추측 단어 처리
      */
     @Transactional
-    public GameGuessResponseDto processGuess(Long participantId, Long roundId, String guessedWord) {
+    public GameGuessResponseDto processGuess(String userNickname, Long roundId, String guessedWord) {
         // GameRound와 정답 단어 가져오기
         GameRound gameRound = gameRoundRepository.findById(roundId)
                 .orElseThrow(() -> new IllegalArgumentException("Game round not found"));
@@ -216,36 +213,31 @@ public class GameService {
         String correctWord = gameRound.getCorrectWord();
 
         // GameParticipant 확인
-        GameParticipant participant = gameParticipantRepository.findById(participantId)
+        GameParticipant participant = gameParticipantRepository.findByGameRoundIdAndUserNickname(roundId, userNickname)
                 .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
 
         //httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord="+correctWord+"&guessedWord="+guessedWord);
         // 유사도 계산 (가정된 함수 사용)
         double similarity = calculateSimilarity(correctWord, guessedWord);
 
-        // 점수 계산
-        int pointsEarned = (int) (similarity * 100);
         // GameGuess 생성 및 저장
         GameGuess gameGuess = GameGuess.builder()
                 .gameRound(gameRound)
                 .participant(participant)
                 .guessedWord(guessedWord)
                 .similarity(similarity)
-                .pointsEarned(pointsEarned)
                 .build();
 
         gameGuessRepository.save(gameGuess);
-        gameParticipantRepository.save(participant);
 
         // 응답 데이터 생성
         return GameGuessResponseDto.builder()
                 .guessedWord(guessedWord)
                 .similarity(similarity)
-                .pointsEarned(pointsEarned)
                 .build();
     }
 
-    public void saveImage(Long gameRoundId, byte[] imageBytes) {
+    public String saveImage(Long gameRoundId, byte[] imageBytes) {
         LocalDateTime localDateTime = LocalDateTime.now();
         // 파일 저장 경로 설정
         String timestamp = localDateTime.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
@@ -265,11 +257,52 @@ public class GameService {
         gameRound.setEndedAt(localDateTime);
         gameRound.setImageUrl(filePath);
 
-
+        return filePath;
     }
 
-    public void endRound(Long gameRoomId, Long gameRoundId, byte[] imageBytes) {
-        saveImage(gameRoundId, imageBytes);
+    public Map<String, Map<String, Object>> endRound(Long gameRoomId, Long gameRoundId) {
+        // 라운드와 관련된 정보 가져오기
+        GameRound gameRound = gameRoundRepository.findById(gameRoundId)
+                .orElseThrow(() -> new IllegalArgumentException("GameRound not found"));
+
+        List<GameGuess> guesses = gameGuessRepository.findByGameRoundId(gameRoundId);
+        List<GameParticipant> participants = gameParticipantRepository.findByGameRoomId(gameRoomId);
+
+        // 참가자의 nickname -> {guessedWord, similarity, totalPoints} 매핑 결과
+        Map<String, Map<String, Object>> result = new HashMap<>();
+
+        // 참가자 점수 업데이트
+        for (GameParticipant participant : participants) {
+            // 참가자의 가장 유사한 단어 찾기
+            GameGuess bestGuess = guesses.stream()
+                    .filter(guess -> guess.getParticipant().getId().equals(participant.getId()))
+                    .max(Comparator.comparing(GameGuess::getSimilarity))
+                    .orElse(null);
+
+            double points = 0;
+            String bestGuessedWord = null;
+            double bestSimilarity = 0;
+
+            if (bestGuess != null) {
+                points = bestGuess.getSimilarity() * 100;
+                bestGuessedWord = bestGuess.getGuessedWord();
+                bestSimilarity = bestGuess.getSimilarity();
+            }
+
+            // 참가자의 총 점수 업데이트
+            participant.setPointsEarned(participant.getPointsEarned() + (int) points);
+            gameParticipantRepository.save(participant);
+
+            // 결과 저장
+            Map<String, Object> guessResult = new HashMap<>();
+            guessResult.put("guessedWord", bestGuessedWord);
+            guessResult.put("similarity", bestSimilarity);
+            guessResult.put("totalPoints", participant.getPointsEarned());
+
+            result.put(participant.getUser().getNickname(), guessResult);
+        }
+
+        return result;
     }
 
     private double calculateSimilarity(String correctWord, String guessedWord) {

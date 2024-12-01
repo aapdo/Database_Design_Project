@@ -8,5 +8,4 @@ import lombok.Data;
 public class GameGuessResponseDto {
     private String guessedWord;
     private Double similarity;
-    private Integer pointsEarned;
 }

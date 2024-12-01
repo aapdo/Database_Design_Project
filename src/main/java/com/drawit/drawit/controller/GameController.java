@@ -5,9 +5,11 @@ import com.drawit.drawit.dto.request.GuessWordRequestDto;
 import com.drawit.drawit.dto.request.RequestInviteRoomDto;
 import com.drawit.drawit.dto.request.RequestJoinRoomDto;
 import com.drawit.drawit.dto.response.GameGuessResponseDto;
+import com.drawit.drawit.entity.GameParticipant;
 import com.drawit.drawit.entity.GameRound;
 import com.drawit.drawit.service.GameService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -25,6 +27,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class GameController {
     private final GameService gameService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -41,8 +44,9 @@ public class GameController {
         String userNickname = (String) payload.get("userNickname");
         Map<String, Object> ret = gameService.makeRoom(userNickname);
         // 대기 중인 요청을 클라이언트로 전송
+        log.info("make room. host: " + userNickname);
         messagingTemplate.convertAndSend(
-                "/roomHost/" + ret.get("hostNickname"),
+                "/roomHost/" + ret.get("userNickname"),
                 Map.of(
                         "gameRoomId", ret.get("gameRoomId"),
                         "participantId", ret.get("participantId")
@@ -156,16 +160,19 @@ public class GameController {
     public void guessWord(@Payload GuessWordRequestDto requestDto) {
         // 추측 처리
         GameGuessResponseDto responseDto = gameService.processGuess(
-                requestDto.getParticipantId(),
+                requestDto.getUserNickname(),
                 requestDto.getRoundId(),
                 requestDto.getGuessedWord()
         );
 
+
         // 결과 클라이언트로 전송
-        messagingTemplate.convertAndSendToUser(
-                requestDto.getParticipantId().toString(),
-                "/queue/guessResult",
-                responseDto
+        messagingTemplate.convertAndSend(
+                "/queue/guessResult/"+requestDto.getUserNickname(),
+                Map.of(
+                        "guessedWord", responseDto.getGuessedWord(),
+                        "similarity", responseDto.getSimilarity()
+                )
         );
     }
 
@@ -179,10 +186,25 @@ public class GameController {
      */
     @MessageMapping("/endRound")
     public void endRound(@Payload Map<String, Object> payload) {
+        Long gameRoomId = (Long) payload.get("gameRoomId");
         Long gameRoundId = (Long) payload.get("gameRoundId");
         byte[] imageBytes = (byte[]) payload.get("imageData"); // 바이너리 데이터
 
-        gameService.saveImage(gameRoundId, imageBytes);
+        String imagePath = gameService.saveImage(gameRoundId, imageBytes);
+        Map<String, Map<String, Object>> roundResult = gameService.endRound(gameRoomId, gameRoundId);
+        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(gameRoomId);
+
+        for (String nickname : participantUserNicknameList) {
+            messagingTemplate.convertAndSend(
+                    "/queue/endRound/" + nickname,
+                    Map.of(
+                            "gameRoomId", gameRoomId,
+                            "gameRoundId", gameRoundId,
+                            "imagePath", imagePath,
+                            "result", roundResult.get(nickname)
+                    )
+            );
+        }
     }
 
     @MessageMapping("/nextRound")

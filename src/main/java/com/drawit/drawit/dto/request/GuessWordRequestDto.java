@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class GuessWordRequestDto {
-    private Long participantId;
+    private String userNickname;
     private Long roundId;
     private String guessedWord;
 }

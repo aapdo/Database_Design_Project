@@ -31,7 +31,4 @@ public class GameGuess {
 
     @Column(name = "similarity")
     private Double similarity;
-
-    @Column(name = "points_earned")
-    private Integer pointsEarned;
 }

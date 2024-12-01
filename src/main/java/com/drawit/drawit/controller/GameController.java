@@ -131,36 +131,22 @@ public class GameController {
         }
     }
 
-    @MessageMapping("/nextRound")
-    public void nextRound(@Payload Map<String, Object> payload) {
-        Long roomId = (Long) payload.get("roomId");
+    @MessageMapping("/sendImage")
+    public void sendPicture(@Payload Map<String, Object> payload) {
+        Long roomId = ((Number) payload.get("roomId")).longValue();
+        byte[] imageBytes = (byte[]) payload.get("imageData"); // 바이너리 데이터
 
-        GameRoundDto gameRoundDto = gameService.nextRound(roomId);
         List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(roomId);
         for (String userNickname : participantUserNicknameList) {
             messagingTemplate.convertAndSend(
-                    "/queue/gameNextRound/" + userNickname,
+                    "/queue/getPicture/" + userNickname,
                     Map.of(
                             "roomId", roomId,
-                            "roundNumber", gameRoundDto.getRoundNumber(),
-                            "drawerNickname", gameRoundDto.getDrawerNickname(),
-                            "correctWord", gameRoundDto.getCorrectWord()
+                            // 이미지 데이터가 들어가야함.
+                            "image", imageBytes
                     )
             );
         }
-    }
-
-    @MessageMapping("/endRound")
-    public void endRound(@Payload Map<String, Object> payload) {
-        Long gameRoundId = Long.valueOf((Integer) payload.get("gameRoundId"));
-        byte[] imageBytes = (byte[]) payload.get("imageData"); // 바이너리 데이터
-
-
-    }
-
-    @MessageMapping("/endGame")
-    public void endGame(@Payload Map<String, Object> payload) {
-
     }
 
     /**
@@ -182,6 +168,42 @@ public class GameController {
                 responseDto
         );
     }
+
+    @MessageMapping("/endRound")
+    public void endRound(@Payload Map<String, Object> payload) {
+        Long gameRoomId = (Long) payload.get("gameRoomId");
+        Long gameRoundId = (Long) payload.get("gameRoundId");
+        byte[] imageBytes = (byte[]) payload.get("imageData"); // 바이너리 데이터
+
+
+    }
+
+    @MessageMapping("/nextRound")
+    public void nextRound(@Payload Map<String, Object> payload) {
+        Long roomId = (Long) payload.get("roomId");
+
+        GameRoundDto gameRoundDto = gameService.nextRound(roomId);
+        List<String> participantUserNicknameList = gameService.getParticipantUserIdsByRoomId(roomId);
+        for (String userNickname : participantUserNicknameList) {
+            messagingTemplate.convertAndSend(
+                    "/queue/gameNextRound/" + userNickname,
+                    Map.of(
+                            "roomId", roomId,
+                            "roundNumber", gameRoundDto.getRoundNumber(),
+                            "drawerNickname", gameRoundDto.getDrawerNickname(),
+                            "correctWord", gameRoundDto.getCorrectWord()
+                    )
+            );
+        }
+    }
+
+
+    @MessageMapping("/endGame")
+    public void endGame(@Payload Map<String, Object> payload) {
+
+    }
+
+
 
     private Long getUserIdFromSession(WebSocketSession session) {
         return (Long) session.getAttributes().get("userId");

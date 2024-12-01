@@ -5,6 +5,7 @@ import com.drawit.drawit.dto.response.GameGuessResponseDto;
 import com.drawit.drawit.entity.*;
 import com.drawit.drawit.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,9 @@ public class GameService {
     private final GameParticipantRepository gameParticipantRepository;
     private final GameRoundRepository gameRoundRepository;
     private final GameGuessRepository gameGuessRepository;
+    private final HttpRequestService httpRequestService;
+    @Value("${python.server.base-url}")
+    private String pythonBaseUrl; // application.properties에서 값 주입
     @Transactional
     public Map<String, Object> makeRoom(Long userId) {
         // 1. 호스트 User 조회
@@ -215,6 +219,7 @@ public class GameService {
         GameParticipant participant = gameParticipantRepository.findById(participantId)
                 .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
 
+        httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord="+correctWord+"&guessedWord="+guessedWord);
         // 유사도 계산 (가정된 함수 사용)
         double similarity = calculateSimilarity(correctWord, guessedWord);
 

@@ -5,10 +5,12 @@ import com.drawit.drawit.dto.UserListDto;
 import com.drawit.drawit.dto.request.RequestRegisterDto;
 import com.drawit.drawit.dto.response.ResponseUserDto;
 import com.drawit.drawit.entity.User;
+import com.drawit.drawit.service.HttpRequestService;
 import com.drawit.drawit.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,6 +27,15 @@ import java.util.List;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final HttpRequestService httpRequestService;
+    @Value("${python.server.base-url}")
+    private String pythonBaseUrl; // application.properties에서 값 주입
+
+    @GetMapping("/test")
+    public String test() {
+
+        return httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord=test1&guessedWord=test2");
+    }
 
     @GetMapping
     public ResponseEntity<?> getUserList() {

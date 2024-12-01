@@ -27,7 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // 클라이언트가 WebSocket 서버에 연결할 엔드포인트 설정
         registry.addEndpoint("/ws")
                 //.addInterceptors(new JwtHandshakeInterceptor(jwtTokenProvider))
-                .setAllowedOrigins("http://localhost:3000", "http://localhost:8081") // CORS 설정
+                .setAllowedOrigins("http://localhost:3000", "http://localhost:8081", "http://drawit-project-bucket.s3-website.ap-northeast-2.amazonaws.com") // CORS 설정
                 .withSockJS(); // SockJS를 통한 fallback 지원
 
     }

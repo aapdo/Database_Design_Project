@@ -77,6 +77,7 @@ public class GameController {
     @MessageMapping("/acceptInvite")
     public void acceptInvite(@Payload Map<String, Object> payload) {
         log.info("초대 수락");
+        log.info("payload: " + payload);
         Long roomId = (Long) payload.get("roomId");
         log.info("방 번호: "+roomId);
         String userNickname = (String) payload.get("userNickname");

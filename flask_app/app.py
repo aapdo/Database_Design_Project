@@ -10,8 +10,8 @@ app = Flask(__name__)
 class VectorDB:
     def __init__(self, nouns_path, embeddings_path):
         # 단어 목록과 임베딩 로드
-        self.nouns = np.load(nouns_path)
-        self.embeddings = np.load(embeddings_path).astype(np.float32)
+        self.nouns = np.load(nouns_path, allow_pickle=True)
+        self.embeddings = np.load(embeddings_path, allow_pickle=True).astype(np.float32)
 
         # FAISS 인덱스 생성 (코사인 유사도를 위한 인덱스)
         self.index = faiss.IndexFlatIP(self.embeddings.shape[1])

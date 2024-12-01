@@ -54,6 +54,7 @@ public class GameController {
                         "participantId", ret.get("participantId")
                 )
         );
+        log.info("OMG");
 
     }
 
@@ -229,6 +230,7 @@ public class GameController {
 
     @MessageMapping("/endGame")
     public void endGame(@Payload Map<String, Object> payload) {
+        Long gameRoomId = (Long) payload.get("gameRoomId");
 
     }
 

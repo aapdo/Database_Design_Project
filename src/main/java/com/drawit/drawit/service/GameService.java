@@ -6,7 +6,9 @@ import com.drawit.drawit.entity.*;
 import com.drawit.drawit.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GameService {
     private final UserRepository userRepository;
     private final GameRoomRepository gameRoomRepository;
@@ -168,33 +171,54 @@ public class GameService {
 
     @Transactional
     public GameRoundDto nextRound(Long gameRoomId) {
+        // 게임 룸 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(gameRoomId)
                 .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
 
+        // 참가자 확인
         List<GameParticipant> participants = gameRoom.getParticipants();
         if (participants.isEmpty()) {
             throw new IllegalStateException("No participants in the room");
         }
 
-        GameRound gameRound = new GameRound();
+        // Drawer 선정
         GameParticipant drawerParticipant = participants.stream()
                 .filter(p -> !p.getIsDraw()) // 아직 Drawer가 아닌 참가자
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No eligible drawer available"));
 
-        gameRound.setDrawer(drawerParticipant.getUser());
         drawerParticipant.setIsDraw(true);
         gameParticipantRepository.save(drawerParticipant);
 
-        String correctWord = "바보";
+        // 랜덤 단어 가져오기
+        log.info("랜덤 단어 가져오기 시작");
+        String url = pythonBaseUrl + "/randomWord";
+        String correctWord;
+        try {
+            ResponseEntity<String> response = httpRequestService.sendGetRequest(url);
+            if (response.getStatusCode() != HttpStatus.OK) {
+                throw new RuntimeException("Failed to fetch random word from similarity service");
+            }
 
+            // Flask 응답에서 랜덤 단어 추출
+            Map<String, Object> responseBody = new ObjectMapper().readValue(response.getBody(), Map.class);
+            correctWord = responseBody.get("randomWord").toString();
+            log.info("랜덤 단어: " +  correctWord);
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching random word", e);
+        }
+
+        // 새 게임 라운드 생성
+        GameRound gameRound = new GameRound();
+        gameRound.setDrawer(drawerParticipant.getUser());
         gameRound.setGameRoom(gameRoom);
         gameRound.setRoundNumber(gameRoom.getGameRounds().size() + 1);
         gameRound.setCorrectWord(correctWord);
-        gameRound.setImageUrl("");
+        gameRound.setImageUrl(""); // 초기값으로 설정
         gameRound.setStartedAt(LocalDateTime.now());
         gameRoundRepository.save(gameRound);
 
+        // DTO 반환
         return GameRoundDto.builder()
                 .gameRoundId(gameRound.getId())
                 .gameRoomId(gameRoom.getId())
@@ -225,8 +249,10 @@ public class GameService {
         String url = pythonBaseUrl + "/getSimilarity?correctWord=" + correctWord + "&guessedWord=" + guessedWord;
         ResponseEntity<String> response;
 
+        log.info("유사도 추출 시작");
         try {
             response = httpRequestService.sendGetRequest(url);
+            log.info("response");
         } catch (Exception e) {
             throw new RuntimeException("Failed to communicate with similarity service", e);
         }
@@ -234,6 +260,7 @@ public class GameService {
         double similarity;
         // 상태 코드 확인
         int statusCode = response.getStatusCodeValue();
+        log.info("status code: "+ statusCode);
         if (statusCode == 501) {
             similarity = -1;
         } else if (statusCode == 500) {
@@ -246,6 +273,7 @@ public class GameService {
         try {
             Map<String, Object> responseBody = new ObjectMapper().readValue(response.getBody(), Map.class);
             similarity = Double.parseDouble(responseBody.get("similarity").toString());
+            log.info("similarity: "+ similarity);
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse similarity response", e);
         }

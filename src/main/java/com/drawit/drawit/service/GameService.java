@@ -219,13 +219,13 @@ public class GameService {
         GameParticipant participant = gameParticipantRepository.findById(participantId)
                 .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
 
-        httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord="+correctWord+"&guessedWord="+guessedWord);
+        //httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord="+correctWord+"&guessedWord="+guessedWord);
         // 유사도 계산 (가정된 함수 사용)
         double similarity = calculateSimilarity(correctWord, guessedWord);
 
         // 점수 계산
         int pointsEarned = (int) (similarity * 100);
-
+        participant.setPointsEarned(participant.getPointsEarned() + pointsEarned);
         // GameGuess 생성 및 저장
         GameGuess gameGuess = GameGuess.builder()
                 .gameRound(gameRound)
@@ -236,6 +236,7 @@ public class GameService {
                 .build();
 
         gameGuessRepository.save(gameGuess);
+        gameParticipantRepository.save(participant);
 
         // 응답 데이터 생성
         return GameGuessResponseDto.builder()
@@ -266,6 +267,10 @@ public class GameService {
         gameRound.setImageUrl(filePath);
 
 
+    }
+
+    public void endRound(Long gameRoomId, Long gameRoundId, byte[] imageBytes) {
+        saveImage(gameRoundId, imageBytes);
     }
 
     private double calculateSimilarity(String correctWord, String guessedWord) {

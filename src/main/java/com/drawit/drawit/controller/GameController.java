@@ -169,13 +169,20 @@ public class GameController {
         );
     }
 
+
+    /**
+     *
+     * @param payload
+     * 이미지를 저장함.
+     * 프론트에서는 이걸 호출하고, 정답은 무엇이었고 누가 맞췄는지 또는 누가 가장 유사했는지 알려줘야함..?
+     *
+     */
     @MessageMapping("/endRound")
     public void endRound(@Payload Map<String, Object> payload) {
-        Long gameRoomId = (Long) payload.get("gameRoomId");
         Long gameRoundId = (Long) payload.get("gameRoundId");
         byte[] imageBytes = (byte[]) payload.get("imageData"); // 바이너리 데이터
 
-
+        gameService.saveImage(gameRoundId, imageBytes);
     }
 
     @MessageMapping("/nextRound")

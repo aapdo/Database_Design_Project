@@ -4,8 +4,10 @@ import com.drawit.drawit.dto.GameRoundDto;
 import com.drawit.drawit.dto.response.GameGuessResponseDto;
 import com.drawit.drawit.entity.*;
 import com.drawit.drawit.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -219,9 +221,34 @@ public class GameService {
         GameParticipant participant = gameParticipantRepository.findByGameRoundIdAndUserNickname(roundId, userNickname)
                 .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
 
-        //httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord="+correctWord+"&guessedWord="+guessedWord);
-        // 유사도 계산 (가정된 함수 사용)
-        double similarity = calculateSimilarity(correctWord, guessedWord);
+        // Flask의 /getSimilarity 호출
+        String url = pythonBaseUrl + "/getSimilarity?correctWord=" + correctWord + "&guessedWord=" + guessedWord;
+        ResponseEntity<String> response;
+
+        try {
+            response = httpRequestService.sendGetRequest(url);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to communicate with similarity service", e);
+        }
+
+        double similarity;
+        // 상태 코드 확인
+        int statusCode = response.getStatusCodeValue();
+        if (statusCode == 501) {
+            similarity = -1;
+        } else if (statusCode == 500) {
+            throw new RuntimeException("Error occurred while calculating similarity");
+        } else if (statusCode != 200) {
+            throw new RuntimeException("Unexpected error from similarity service: " + statusCode);
+        }
+
+        // 유사도 값 파싱
+        try {
+            Map<String, Object> responseBody = new ObjectMapper().readValue(response.getBody(), Map.class);
+            similarity = Double.parseDouble(responseBody.get("similarity").toString());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse similarity response", e);
+        }
 
         // GameGuess 생성 및 저장
         GameGuess gameGuess = GameGuess.builder()

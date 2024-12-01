@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -21,8 +22,24 @@ public class HttpRequestService {
      * @param url 요청을 보낼 URL
      * @return 서버에서 받은 응답
      */
-    public String sendGetRequest(String url) {
-        return restTemplate.getForObject(url, String.class);
+    public ResponseEntity<String> sendGetRequest(String url) {
+        try {
+            // HTTP GET 요청
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    String.class
+            );
+            return response;
+        } catch (HttpClientErrorException e) {
+            // 상태 코드와 에러 메시지를 반환
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            // 기타 에러 처리
+            throw new RuntimeException("Failed to send GET request: " + url, e);
+        }
     }
 
     /**

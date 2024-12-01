@@ -164,6 +164,7 @@ public class GameController {
 
 
         // 결과 클라이언트로 전송
+        // similarity가 -1 이면 추측어가 단어장에 없는거임.
         messagingTemplate.convertAndSend(
                 "/game/guessResult/"+requestDto.getUserNickname(),
                 Map.of(

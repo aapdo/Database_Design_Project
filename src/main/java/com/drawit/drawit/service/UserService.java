@@ -112,7 +112,6 @@ public class UserService implements UserDetailsService {
 
         // 친구 ID와 현재 유저 제외한 사용자 가져오기
         return userRepository.findAll().stream() // 가능하면 findAll 대신 필요한 사용자만 조회하도록 수정
-                .filter(user -> !user.getId().equals(userId)) // 자기 자신 제외
                 .map(user -> {
                     boolean isFriend = allFriendIds.contains(user.getId());
                     return toUserListDto(user, isFriend);

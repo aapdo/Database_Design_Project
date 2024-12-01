@@ -34,7 +34,7 @@ public class UserController {
     @GetMapping("/test")
     public String test() {
 
-        return httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord=test1&guessedWord=test2");
+        return httpRequestService.sendGetRequest(pythonBaseUrl + "/getSimilarity?correctWord=apple&guessedWord=orange");
     }
 
     @GetMapping

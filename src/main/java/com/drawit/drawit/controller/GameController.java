@@ -53,6 +53,8 @@ public class GameController {
     public void inviteRoom(@Payload RequestInviteRoomDto requestInviteRoomDto) {
         String hostNickname = requestInviteRoomDto.getHostNickname();
         log.info("초대 보낸 사람 닉네임: "+ hostNickname);
+        log.info("room id: ", requestInviteRoomDto.getRoomId());
+        log.info("receiverNickname: " + requestInviteRoomDto.getReceiverNickname());
 
         // 초대 처리
          String receiverNickname = gameService.inviteFriendToRoom(

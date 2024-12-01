@@ -71,6 +71,7 @@ def get_similarity():
 @app.route('/randomWord', methods=['GET'])
 def random_word():
     global vector_db
+    print("random word rr")
 
     # 랜덤 단어 반환
     random_word = vector_db.get_random_word()

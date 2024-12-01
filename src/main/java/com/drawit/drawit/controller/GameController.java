@@ -46,7 +46,7 @@ public class GameController {
         // 대기 중인 요청을 클라이언트로 전송
         log.info("make room. host: " + userNickname);
         messagingTemplate.convertAndSend(
-                "/roomHost/" + ret.get("userNickname"),
+                "/roomHost/" + userNickname,
                 Map.of(
                         "gameRoomId", ret.get("gameRoomId"),
                         "participantId", ret.get("participantId")
@@ -87,8 +87,6 @@ public class GameController {
     public void acceptInvite(@Payload Map<String, Object> payload) {
         Long roomId = ((Number) payload.get("roomId")).longValue();
         String userNickname = (String) payload.get("userNickname");
-
-
 
         // 초대 수락 및 참가자 추가
         Long participantId = gameService.acceptInvite(userNickname, roomId);

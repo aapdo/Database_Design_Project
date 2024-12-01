@@ -16,6 +16,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -101,7 +102,9 @@ public class GameController {
                     "/queue/newParticipant/"+ nickname,
                     Map.of(
                             "roomId", roomId,
-                            "participantNicknameList", participantNicknameList,
+                            "participantNicknameList", participantNicknameList.stream()
+                                    .filter(participantNickname -> !participantNickname.equals(hostNickname))
+                                    .collect(Collectors.toList()),
                             "hostNickname", hostNickname
                     )
             );

@@ -119,13 +119,16 @@ public class GameController {
     @MessageMapping("/startGame")
     public void startGame(@Payload Map<String, Object> payload) {
         log.info("start game");
+        log.info("payload: " + payload);
         Long roomId = ((Number) payload.get("roomId")).longValue();
         log.info("room id: " + roomId);
         // 게임 시작 처리
         GameRoundDto gameRoundDto = gameService.startGame(roomId);
+        log.info("game round dto: " + gameRoundDto);
 
         // 모든 참가자에게 게임 시작 알림
         List<String> participantUserNicknameList = gameService.getParticipantUserNicknamesByRoomId(roomId);
+        log.info("participantUserNicknameList: " + participantUserNicknameList);
         for (String userNickname : participantUserNicknameList) {
             messagingTemplate.convertAndSend(
                     "/game/gameStart/" + userNickname,

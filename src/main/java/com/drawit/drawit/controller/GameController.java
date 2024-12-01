@@ -48,7 +48,7 @@ public class GameController {
         log.info("gameRoomId: " + ret.get("gameRoomId"));
         log.info("participantId: " + ret.get("participantId"));
         messagingTemplate.convertAndSend(
-                "/roomHost/" + userNickname,
+                "/queue/roomHost/" + userNickname,
                 Map.of(
                         "gameRoomId", ret.get("gameRoomId"),
                         "participantId", ret.get("participantId")

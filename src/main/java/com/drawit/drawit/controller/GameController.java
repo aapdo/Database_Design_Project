@@ -118,8 +118,9 @@ public class GameController {
      */
     @MessageMapping("/startGame")
     public void startGame(@Payload Map<String, Object> payload) {
+        log.info("start game");
         Long roomId = ((Number) payload.get("roomId")).longValue();
-
+        log.info("room id: " + roomId);
         // 게임 시작 처리
         GameRoundDto gameRoundDto = gameService.startGame(roomId);
 

@@ -1,6 +1,5 @@
 package com.drawit.drawit.configuration;
 
-import com.drawit.drawit.security.JwtHandshakeInterceptor;
 import com.drawit.drawit.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

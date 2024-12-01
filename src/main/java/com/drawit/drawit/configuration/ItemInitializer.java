@@ -3,7 +3,6 @@ package com.drawit.drawit.configuration;
 import com.drawit.drawit.entity.Item;
 import com.drawit.drawit.repository.ItemRepository;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;

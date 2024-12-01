@@ -1,4 +1,5 @@
 flask
-pymilvus
 numpy
 scipy
+faiss-cpu
+faiss-gpu

@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Flask 애플리케이션 복사
 COPY . .
+COPY ../flask_data /app/data
 
 # Flask 애플리케이션 실행
 CMD ["python", "app.py"]

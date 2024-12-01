@@ -69,6 +69,7 @@ public class GameService {
     /**
      * @return receiver nickname
      */
+    @Transactional
     public String inviteFriendToRoom(String hostNickname, Long roomId, String receiverNickname) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
@@ -109,6 +110,7 @@ public class GameService {
     /**
      * 특정 방의 정보 가져오기 (호스트 닉네임 및 참가자 닉네임 목록)
      */
+    @Transactional
     public Map<String, Object> getRoomInfo(Long roomId) {
         GameRoom gameRoom = gameRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Game room not found"));
@@ -129,6 +131,7 @@ public class GameService {
     /**
      * 특정 방의 모든 참가자의 User nickname 목록 가져오기
      */
+    @Transactional
     public List<String> getParticipantUserNicknamesByRoomId(Long roomId) {
         return gameParticipantRepository.findAllByGameRoomId(roomId).stream()
                 .map(participant -> participant.getUser().getNickname())
@@ -237,6 +240,7 @@ public class GameService {
                 .build();
     }
 
+    @Transactional
     public String saveImage(Long gameRoundId, byte[] imageBytes) {
         LocalDateTime localDateTime = LocalDateTime.now();
         // 파일 저장 경로 설정
@@ -260,6 +264,7 @@ public class GameService {
         return filePath;
     }
 
+    @Transactional
     public Map<String, Map<String, Object>> endRound(Long gameRoomId, Long gameRoundId) {
         // 라운드와 관련된 정보 가져오기
         GameRound gameRound = gameRoundRepository.findById(gameRoundId)
@@ -305,6 +310,7 @@ public class GameService {
         return result;
     }
 
+    @Transactional
     public Map<String, Object> getGameResult(Long gameRoomId) {
         // 게임 방의 모든 라운드 가져오기
         List<GameRound> gameRounds = gameRoundRepository.findByGameRoomId(gameRoomId);

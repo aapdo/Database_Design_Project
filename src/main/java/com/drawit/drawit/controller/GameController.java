@@ -76,16 +76,23 @@ public class GameController {
      */
     @MessageMapping("/acceptInvite")
     public void acceptInvite(@Payload Map<String, Object> payload) {
+        log.info("초대 수락");
         Long roomId = ((Number) payload.get("roomId")).longValue();
         String userNickname = (String) payload.get("userNickname");
+        log.info("방 번호: "+roomId);
+        log.info("수락한 유저의 닉네임: "+userNickname);
 
         // 초대 수락 및 참가자 추가
         Long participantId = gameService.acceptInvite(userNickname, roomId);
+        log.info("참가자 아이디: " + participantId);
 
         // 방 정보 가져오기
         Map<String, Object> roomInfo = gameService.getRoomInfo(roomId);
+        log.info("room info: " + roomInfo);
         String hostNickname = (String) roomInfo.get("hostNickname");
+        log.info("hostNickname: " + hostNickname);
         List<String> participantNicknameList = (List<String>) roomInfo.get("participantNicknameList");
+        log.info("participantNicknameList: " + participantNicknameList);
 
         for (String nickname : participantNicknameList) {
             messagingTemplate.convertAndSend(

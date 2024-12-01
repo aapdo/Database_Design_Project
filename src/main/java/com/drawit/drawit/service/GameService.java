@@ -195,7 +195,10 @@ public class GameService {
         String url = pythonBaseUrl + "/randomWord";
         String correctWord;
         try {
+            log.info("send get ");
             ResponseEntity<String> response = httpRequestService.sendGetRequest(url);
+            log.info("send get ok");
+
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new RuntimeException("Failed to fetch random word from similarity service");
             }

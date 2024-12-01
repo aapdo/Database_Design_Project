@@ -45,6 +45,8 @@ public class GameController {
         Map<String, Object> ret = gameService.makeRoom(userNickname);
         // 대기 중인 요청을 클라이언트로 전송
         log.info("make room. host: " + userNickname);
+        log.info("gameRoomId: " + ret.get("gameRoomId"));
+        log.info("participantId: " + ret.get("participantId"));
         messagingTemplate.convertAndSend(
                 "/roomHost/" + userNickname,
                 Map.of(
